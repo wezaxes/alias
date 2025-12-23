@@ -131,15 +131,16 @@ elif st.session_state.game_state == "mode_select":
     col1, col2 = st.columns(2)
     
     with col1:
-        # Створюємо візуальну картку
+        # Твій стиль mode-selection залишається, просто додаємо обгортку mode-container
         st.markdown("""
-            <div class="mode-card">
-                <h2 style='margin:0;'>🏠</h2>
-                <h3 style='color:#f9e2af; margin:10px 0;'>РЕЖИМ IRL</h3>
-                <p style='color:#cdd6f4; font-size:14px;'>Командна гра вживу</p>
+            <div class="mode-container">
+                <div class="mode-selection">
+                    <h3>🏠 IRL</h3>
+                    <p>Командна гра вживу</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
-        # Накладаємо невидиму кнопку зверху
+        # Ця кнопка невидима, але вона ловить клік по всій площі div вище
         if st.button("overlay_irl", key="overlay_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
@@ -147,10 +148,11 @@ elif st.session_state.game_state == "mode_select":
             
     with col2:
         st.markdown("""
-            <div class="mode-card">
-                <h2 style='margin:0;'>🎙️</h2>
-                <h3 style='color:#f9e2af; margin:10px 0;'>DISCORD</h3>
-                <p style='color:#cdd6f4; font-size:14px;'>Кругова гра через демку</p>
+            <div class="mode-container">
+                <div class="mode-selection">
+                    <h3>🎙️ DISCORD</h3>
+                    <p>Кругова гра через демку</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
         if st.button("overlay_discord", key="overlay_discord"):
@@ -158,7 +160,6 @@ elif st.session_state.game_state == "mode_select":
             st.session_state.game_state = "setup"
             st.rerun()
     st.stop()
-
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
