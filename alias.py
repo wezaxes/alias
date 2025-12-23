@@ -15,6 +15,18 @@ st.markdown("""
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
+    /* ВУЗЬКА ТА МАЛЕНЬКА КНОПКА НАЗАД */
+div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
+    width: auto !important;           /* Ширина по тексту, а не на весь екран */
+    min-width: 120px !important;      /* Мінімальна ширина */
+    height: 2.2em !important;         /* Невелика висота */
+    font-size: 14px !important;       /* Менший шрифт */
+    padding: 0px 15px !important;     /* Відступи всередині */
+    background: #45475a !important;   /* Темніший колір, щоб не відволікати */
+    border: 1px solid #89b4fa !important; /* Тонка рамка */
+    margin-left: 0 !important;        /* Притиснути вліво */
+}
+
     h1, h2, h3, p { text-align: center !important; }
     .word-box { 
         font-size: 42px; text-align: center; font-weight: bold; 
