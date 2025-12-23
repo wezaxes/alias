@@ -8,8 +8,14 @@ st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="�
 # Стилізація інтерфейсу
 st.markdown("""
     <style>
+    /* Центрування кнопок та тексту */
+    .stButton {
+        display: flex;
+        justify-content: center;
+    }
     .stButton>button { 
         width: 100%; 
+        max-width: 500px;
         height: 4.5em; 
         font-size: 24px !important; 
         font-weight: bold; 
@@ -20,6 +26,11 @@ st.markdown("""
     }
     .stButton>button:hover { transform: scale(1.02); }
     
+    /* Центрування заголовків та тексту */
+    h1, h2, h3, p {
+        text-align: center !important;
+    }
+
     .word-box { 
         font-size: 42px; 
         text-align: center; 
@@ -40,14 +51,20 @@ st.markdown("""
         border-radius: 15px;
         border: 2px solid #f38ba8;
     }
+    
+    .last-word-box {
+        font-style: italic;
+        color: #a6e3a1;
+        text-align: center;
+        margin-top: 10px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Завантаження слів
 @st.cache_data
 def load_initial_words():
-    # Початковий набір слів, якщо файлу немає
-    return ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт"]
+    return ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт", "Паляниця", "Бавовна"]
 
 # Ініціалізація станів
 if 'init_done' not in st.session_state:
@@ -59,11 +76,12 @@ if 'init_done' not in st.session_state:
     st.session_state.playing = False
     st.session_state.game_over = False
     st.session_state.welcome_done = False
+    st.session_state.last_added_word = ""
     st.session_state.init_done = True
 
 # --- 1. ЕКРАН ДИСКЛЕЙМЕРА ---
 if not st.session_state.welcome_done:
-    st.markdown("<h2 style='text-align: center; color: #fab387;'>ДИСКЛЕЙМЕР</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #fab387;'>WEZAXES ENTERTAINMENT ПРЕДСТАВЛЯЄ</h2>", unsafe_allow_html=True)
     st.markdown("""
         <div class="disclaimer-box">
             <h2 style='color: #f38ba8; margin-top: 0;'>УВАГА КОД ПИСАЛА ЖІНКА‼️</h2>
@@ -85,16 +103,26 @@ if not st.session_state.playing and not st.session_state.game_over:
     
     # СЕКЦІЯ ДОДАВАННЯ СЛІВ
     with st.expander("➕ Додати своє дебільне слово"):
-        new_word = st.text_input("Введи слово:", placeholder="Наприклад: Солевар").strip().capitalize()
+        st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і які можна пояснити!")
+        
+        # Генеруємо приклад слова
+        example_word = random.choice(st.session_state.all_words)
+        
+        new_word = st.text_input("Введи слово:", placeholder=f"Наприклад: {example_word}").strip().capitalize()
+        
         if st.button("ДОДАТИ В СЛОВНИК"):
             if new_word:
                 if new_word in st.session_state.all_words:
                     st.error("Таке слово вже є, давай придумаємо щось прикольніше")
                 else:
                     st.session_state.all_words.append(new_word)
-                    st.success(f"Слово '{new_word}' додано! Тепер їх {len(st.session_state.all_words)}")
+                    st.session_state.last_added_word = new_word
+                    st.success(f"Вітаю, ви придумали нове прикольне слово, дякую! (Всього: {len(st.session_state.all_words)})")
             else:
                 st.warning("Ну введи хоч щось...")
+        
+        if st.session_state.last_added_word:
+            st.markdown(f'<div class="last-word-box">Останнє додане слово: {st.session_state.last_added_word}</div>', unsafe_allow_html=True)
 
     st.divider()
     
@@ -112,7 +140,6 @@ if not st.session_state.playing and not st.session_state.game_over:
     if st.button("🔥 ПОЧАТИ ГРУ"):
         st.session_state.team_names = temp_names
         st.session_state.teams = {name: 0 for name in temp_names}
-        # Робимо копію слів для гри, щоб перемішати їх
         st.session_state.game_words = st.session_state.all_words.copy()
         random.shuffle(st.session_state.game_words)
         st.session_state.playing = True
@@ -124,7 +151,7 @@ elif st.session_state.playing:
     
     if 'start_time' not in st.session_state:
         st.title(f"Черга: {current_team}")
-        st.info(f"Раунд: {st.session_state.current_round} / {st.session_state.total_rounds}")
+        st.write(f"### Раунд: {st.session_state.current_round} / {st.session_state.total_rounds}")
         if st.button(f"Я ГОТОВИЙ(-А)! ▶️"):
             st.session_state.start_time = time.time()
             st.session_state.current_word = st.session_state.game_words.pop(0) if st.session_state.game_words else "СЛОВА СКІНЧИЛИСЬ"
@@ -148,7 +175,7 @@ elif st.session_state.playing:
             st.rerun()
         else:
             st.progress(max(0.0, min(time_left / st.session_state.duration, 1.0)))
-            st.subheader(f"⏱ {time_left} сек | {current_team}: {st.session_state.teams[current_team]} ⭐")
+            st.write(f"### ⏱ {time_left} сек | {current_team}: {st.session_state.teams[current_team]} ⭐")
             
             st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
             
@@ -171,13 +198,14 @@ elif st.session_state.game_over:
     sorted_scores = sorted(st.session_state.teams.items(), key=lambda x: x[1], reverse=True)
     
     for i, (name, score) in enumerate(sorted_scores):
-        st.markdown(f"### {i+1}. {name}: {score} балів")
+        st.write(f"### {i+1}. {name}: {score} балів")
     
     if st.button("ЗІГРАТИ ЩЕ РАЗ 🔄"):
-        # Очищаємо все, крім загального списку слів
         words_backup = st.session_state.all_words
+        last_word_backup = st.session_state.last_added_word
         st.session_state.clear()
         st.session_state.all_words = words_backup
+        st.session_state.last_added_word = last_word_backup
         st.session_state.init_done = True
-        st.session_state.welcome_done = True # Щоб не бачити дисклеймер знову
+        st.session_state.welcome_done = True
         st.rerun()
