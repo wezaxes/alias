@@ -99,66 +99,44 @@ if not st.session_state.welcome_done:
 if not st.session_state.playing and not st.session_state.game_over:
     st.title("⚙️ Налаштування Alias")
     
-    with st.expander("➕ Додати своє дебільне слово"):
+        with st.expander("➕ Додати своє дебільне слово"):
         st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і які можна пояснити!")
         
-        # Ініціалізація пам'яті для повідомлень та останнього слова, якщо їх ще немає
         if 'msg' not in st.session_state: st.session_state.msg = None
         if 'msg_type' not in st.session_state: st.session_state.msg_type = None
         if 'last_added_word' not in st.session_state: st.session_state.last_added_word = ""
 
-        # Рандомний приклад слова (беремо з сесії)
         example_word = random.choice(st.session_state.all_words) if st.session_state.all_words else "Слово"
-        
-        # Поле вводу
         new_word_raw = st.text_input("Введи слово:", placeholder=f"Наприклад: {example_word}")
 
         if st.button("ДОДАТИ В СЛОВНИК"):
             clean_word = new_word_raw.strip().capitalize()
             compare_word = new_word_raw.strip().lower()
-            
-            # Очищений список для перевірки на дублікати
             existing_words_clean = [w.strip().lower() for w in st.session_state.all_words]
 
-            if not clean_word:
-                st.session_state.msg = "Ну введи хоч щось..."
-                st.session_state.msg_type = "warning"
-            elif compare_word in existing_words_clean:
-                st.session_state.msg = "Таке слово вже є, давай придумаємо щось прикольніше"
-                st.session_state.msg_type = "error"
-            else:
-                # 1. Додаємо в список у сесії
-                st.session_state.all_words.append(clean_word)
-                # 2. Записуємо у файл words.txt
-                append_word_to_file(clean_word)
-                # 3. Зберігаємо як ОСТАННЄ додане
-                st.session_state.last_added_word = clean_word
-                # 4. Готуємо повідомлення про успіх
-                st.session_state.msg = f"Вітаю, ви придумали нове прикольне слово, дякую! (Всього: {len(st.session_state.all_words)})"
-                st.session_state.msg_type = "success"
-            
-            # Перезавантажуємо, щоб зберегти зміни
-            st.rerun()
+            if clean_word: # Працюємо тільки якщо в полі щось вписано
+                if compare_word in existing_words_clean:
+                    st.session_state.msg = "Таке слово вже є, давай придумаємо щось прикольніше"
+                    st.session_state.msg_type = "error"
+                else:
+                    st.session_state.all_words.append(clean_word)
+                    append_word_to_file(clean_word)
+                    st.session_state.last_added_word = clean_word
+                    st.session_state.msg = f"Вітаю, ви придумали нове прикольне слово, дякую! (Всього: {len(st.session_state.all_words)})"
+                    st.session_state.msg_type = "success"
+                st.rerun()
 
-        # --- ТУТ МИ ВИВОДИМО РЕЗУЛЬТАТИ ПІСЛЯ ПЕРЕЗАВАНТАЖЕННЯ ---
-        
-        # Вивід повідомлення (зелене/червоне/жовте)
         if st.session_state.msg:
             if st.session_state.msg_type == "success":
                 st.success(st.session_state.msg)
             elif st.session_state.msg_type == "error":
                 st.error(st.session_state.msg)
-            elif st.session_state.msg_type == "warning":
-                st.warning(st.session_state.msg)
-            
-            # Очищуємо повідомлення після виводу, щоб воно не висіло вічно
-            # (якщо хочеш щоб висіло - видали ці два рядки нижче)
             st.session_state.msg = None 
             st.session_state.msg_type = None
 
-        # Вивід останнього доданого слова (беремо з сесії)
         if st.session_state.last_added_word:
             st.markdown(f"**Останнє додане слово:** `{st.session_state.last_added_word}`")
+
 
     st.divider()
     
