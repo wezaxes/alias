@@ -174,11 +174,12 @@ elif st.session_state.game_state == "mode_select":
 
 elif st.session_state.game_state == "setup":
     if st.button("⬅️ НАЗАД"):
-        st.session_state.game_state = "mode_select"; st.rerun()
+        st.session_state.game_state = "mode_select"
+        st.rerun()
     
     st.title("⚙️ Налаштування")
     
-    # Додавання слів
+    # --- ДОДАВАННЯ СЛІВ ---
     with st.expander("➕ Додати своє дебільне слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         new_word_raw = st.text_input("Введи слово:", key="input_field")
@@ -190,11 +191,11 @@ elif st.session_state.game_state == "setup":
 
             if word != "":
                 if low_word in existing_low:
-                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+                    st.session_state.msg_data = {"text": "Таке слово вже є!", "type": "error"}
                 else:
                     st.session_state.all_words.append(word)
                     st.session_state.last_added_word = word
-                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                    st.session_state.msg_data = {"text": "Додано успішно!", "type": "success"}
                     append_word_to_file(word)
                 st.rerun()
 
@@ -209,8 +210,9 @@ elif st.session_state.game_state == "setup":
 
     st.divider()
     
-if st.session_state.game_mode == "discord":
-        room_id = st.text_input("Код кімнати (наприклад: 7777):", value=" ").upper()
+    # --- ЛОГІКА DISCORD ---
+    if st.session_state.game_mode == "discord":
+        room_id = st.text_input("Код кімнати (наприклад: 7777):", value="7777").upper()
         my_name = st.text_input("Твій нікнейм:")
         
         if st.button("ВХІД У КІМНАТУ 🔥"):
@@ -223,19 +225,17 @@ if st.session_state.game_mode == "discord":
                     ref = db.collection("rooms").document(room_id)
                     doc = ref.get()
                     
-                    # Якщо кімнати немає АБО вона вже завершена — створюємо її заново як Хост
+                    # Якщо кімнати немає або завершена — створюємо (ЯК ХОСТ)
                     if not doc.exists or doc.to_dict().get("state") == "finished":
                         ref.set({
-                            "host": my_name,        # Ти — Хост
-                            "players": [my_name], 
-                            "scores": {my_name: 0}, 
-                            "state": "lobby", 
-                            "total_rounds": 3,      # Початкове значення
-                            "duration": 60,         # Початкове значення
-                            "explainer": "", 
-                            "listener": "", 
-                            "word": "",
-                            "current_round": 1
+                            "host": my_name,
+                            "players": [my_name],
+                            "scores": {my_name: 0},
+                            "state": "lobby",
+                            "total_rounds": 3,
+                            "duration": 60,
+                            "current_round": 1,
+                            "explainer": "", "listener": "", "word": ""
                         })
                     else:
                         # Заходимо як звичайний гравець
@@ -243,11 +243,12 @@ if st.session_state.game_mode == "discord":
                         if my_name not in data["players"]:
                             data["players"].append(my_name)
                             data["scores"][my_name] = 0
-                            ref.update(data)
+                            ref.update({"players": data["players"], "scores": data["scores"]})
                     
                     st.session_state.game_state = "sync_lobby"
                     st.rerun()
-                    
+
+    # --- ЛОГІКА IRL (залишаємо як було) ---
     elif st.session_state.game_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
