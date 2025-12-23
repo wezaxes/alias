@@ -120,7 +120,9 @@ elif st.session_state.game_state == "mode_select":
         st.session_state.game_mode = params["mode"]
         st.session_state.game_state = "setup"
         st.query_params.
-        clear() # Очищуємо, щоб не зациклилось
+
+> asya:
+clear() # Очищуємо, щоб не зациклилось
         st.rerun()
 
     col1, col2 = st.columns(2)
@@ -184,7 +186,7 @@ elif st.session_state.game_state == "setup":
                 st.error(st.session_state.msg_data["text"])
         
         if st.session_state.last_added_word:
-            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
+            st.markdown(f"✅ Останнє додане: {st.session_state.last_added_word}")
 
     st.divider()
     
@@ -226,7 +228,10 @@ elif st.session_state.game_state == "waiting":
     explainer = st.session_state.players[idx]
     listener = st.session_state.players[(idx + 1) % len(st.session_state.players)]
     
-    st.markdown(f"""<div class="waiting-screen">
+    st.markdown(f"""
+
+> asya:
+<div class="waiting-screen">
             <h1 style="margin-bottom:0;">🤫 ТССС, ГОТУЄМОСЬ!</h1>
             <p style="font-size:18px;">Коло {st.session_state.current_round} з {st.session_state.total_rounds}</p>
             <hr style="border: 1px solid #45475a;">
