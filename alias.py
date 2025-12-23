@@ -126,15 +126,43 @@ elif st.session_state.game_state == "setup":
         st.rerun()
 
     st.title("⚙️ Налаштування Alias")
-    with st.expander("➕ Додати слово"):
-        new_word = st.text_input("Введи слово:")
-        if st.button("ДОДАТИ"):
-            word = new_word.strip().capitalize()
-            if word and word.lower() not in [w.lower() for w in st.session_state.all_words]:
+    
+    with st.expander("➕ Додати своє дебільне слово"):
+        st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
+        
+        new_word_raw = st.text_input("Введи слово:", key="input_field")
+
+        if st.button("ДОДАТИ В СЛОВНИК"):
+            word = new_word_raw.strip().capitalize()
+            low_word = word.lower()
+            existing_low = [w.lower() for w in st.session_state.all_words]
+
+            if word == "":
+                pass
+            elif low_word in existing_low:
+                st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+            else:
                 st.session_state.all_words.append(word)
-                append_word_to_file(word)
-                st.success("Додано!")
+                st.session_state.last_added_word = word
+                st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                # Спроба зберегти у файл (працює локально, на сервері тимчасово)
+                try:
+                    with open("words.txt", "a", encoding="utf-8") as f:
+                        f.write(word + "\n")
+                except:
+                    pass
             st.rerun()
+
+        if st.session_state.msg_data["text"]:
+            if st.session_state.msg_data["type"] == "success":
+                st.success(st.session_state.msg_data["text"])
+            else:
+                st.error(st.session_state.msg_data["text"])
+        
+        if st.session_state.last_added_word:
+            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
+
+    st.divider()
 
     g_mode = st.session_state.game_mode
     if g_mode == "irl":
