@@ -114,25 +114,26 @@ if st.session_state.game_state == "welcome":
     st.stop()
 
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
+# --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Робимо кнопку, яка виглядає як твоя плита
-        # \n створює переноси рядків, щоб текст був як на плитці
-        if st.button("🏠 IRL\n\nКомандна гра вживу", key="btn_irl"):
+        # Кнопка тепер сама є плитою
+        if st.button("🏠 IRL\n\nКомандна гра вживу", key="mode_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
             st.rerun()
             
     with col2:
-        if st.button("🎙️ DISCORD\n\nКругова гра через демку", key="btn_discord"):
+        if st.button("🎙️ DISCORD\n\nКругова гра через демку", key="mode_discord"):
             st.session_state.game_mode = "discord"
             st.session_state.game_state = "setup"
             st.rerun()
     st.stop()
+
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
