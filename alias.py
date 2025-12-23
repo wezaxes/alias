@@ -10,11 +10,26 @@ st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="�
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
+    
+    /* Основні кнопки */
     .stButton>button { 
         width: 100%; max-width: 500px; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
+
+    /* ВУЗЬКА ТА МАЛЕНЬКА КНОПКА НАЗАД БЛЯТЬ ВОНО НЕ ЛІПИТЬСЯ ДАЖЕ З ІМПОРТАНТОМ*/
+    div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
+        width: auto !important;
+        min-width: 150px !important;
+        height: 2.5em !important;
+        font-size: 14px !important;
+        margin-left: 0 !important;
+        padding: 5px 20px !important;
+        background: #45475a !important;
+        border: 1px solid #89b4fa !important;
+    }
+
     h1, h2, h3, p { text-align: center !important; }
     .word-box { 
         font-size: 42px; text-align: center; font-weight: bold; 
@@ -35,7 +50,7 @@ st.markdown("""
         margin-top: 20px; text-transform: uppercase;
     }
     
-    /* Твій дизайн плит */
+    /*ЇБУЧІ ЗДОРОВІ КНОПКИ КРАСІВІ*/
     .mode-selection {
         padding: 30px; 
         border-radius: 20px; 
