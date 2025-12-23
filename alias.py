@@ -218,6 +218,17 @@ elif st.session_state.game_state == "mode_select":
             </a>
         """, unsafe_allow_html=True)
 
+    # Додаємо відступ та маленьку кнопку внизу
+    st.write("") 
+    st.divider()
+    
+    # Використовуємо колонки, щоб зробити кнопку маленькою (по центру)
+    _, btn_col, _ = st.columns([1, 2, 1])
+    with btn_col:
+        if st.button("❓ Я ЗАБУВ ЯК РУЛИТЬ", use_container_width=True):
+            st.session_state.game_state = "tutorial"
+            st.rerun()
+
 elif st.session_state.game_state == "setup":
     if st.button("⬅️ НАЗАД"):
         st.session_state.game_state = "mode_select"
