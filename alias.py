@@ -112,25 +112,40 @@ if st.session_state.game_state == "welcome":
     st.stop()
 
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
-# --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
-    st.write("Тисни на картку, щоб почати:")
     
     col1, col2 = st.columns(2)
+    
     with col1:
-        # Текст \n робить перенос рядка всередині кнопки
-        if st.button("🏠\nIRL\n(Вживу)", key="btn_irl"):
+        # Створюємо візуальну картку
+        st.markdown("""
+            <div class="mode-card">
+                <h2 style='margin:0;'>🏠</h2>
+                <h3 style='color:#f9e2af; margin:10px 0;'>РЕЖИМ IRL</h3>
+                <p style='color:#cdd6f4; font-size:14px;'>Командна гра вживу</p>
+            </div>
+        """, unsafe_allow_html=True)
+        # Накладаємо невидиму кнопку зверху
+        if st.button("overlay_irl", key="overlay_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
             st.rerun()
             
     with col2:
-        if st.button("🎙️\nDISCORD\n(Через демку)", key="btn_discord"):
+        st.markdown("""
+            <div class="mode-card">
+                <h2 style='margin:0;'>🎙️</h2>
+                <h3 style='color:#f9e2af; margin:10px 0;'>DISCORD</h3>
+                <p style='color:#cdd6f4; font-size:14px;'>Кругова гра через демку</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("overlay_discord", key="overlay_discord"):
             st.session_state.game_mode = "discord"
             st.session_state.game_state = "setup"
             st.rerun()
     st.stop()
+
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
