@@ -310,11 +310,18 @@ elif st.session_state.game_state == "playing_sync":
                 st.info("Глядач")
         time.sleep(1); st.rerun()
 
-# --- СТАРИЙ IRL РЕЖИМ (БЕЗ ЗМІН) ---
+# --- СТАРИЙ IRL РЕЖИМ (ВИПРАВЛЕНИЙ) ---
 elif st.session_state.game_state == "playing_irl":
+    # Перевірка на кінець гри перед початком ходу
+    if st.session_state.current_round > st.session_state.total_rounds:
+        st.session_state.game_state = "finished"
+        st.rerun()
+
     active = st.session_state.players[st.session_state.current_player_idx]
+    
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
-        st.title(f"Черга: {active}")
+        st.title(f"Раунд {st.session_state.current_round} з {st.session_state.total_rounds}")
+        st.subheader(f"Черга: {active}")
         if st.button("Я ГОТОВИЙ! ▶️"):
             st.session_state.turn_active = True
             st.session_state.start_time = time.time()
@@ -322,29 +329,47 @@ elif st.session_state.game_state == "playing_irl":
             st.rerun()
     else:
         rem = int(st.session_state.duration - (time.time() - st.session_state.start_time))
+        
+        # Якщо час вийшов
         if rem <= 0:
             st.session_state.turn_active = False
-            st.session_state.current_player_idx = (st.session_state.current_player_idx + 1) % len(st.session_state.players)
+            # Перехід до наступного гравця
+            st.session_state.current_player_idx += 1
+            
+            # Якщо всі гравці сходили — раунд закінчено
+            if st.session_state.current_player_idx >= len(st.session_state.players):
+                st.session_state.current_player_idx = 0
+                st.session_state.current_round += 1
+            
             st.rerun()
+
         st.subheader(f"⏱ {rem} сек | {active}: {st.session_state.scores[active]} ⭐")
         st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
+        
         c1, c2 = st.columns(2)
         if c1.button("✅ ВГАДАНО"):
             st.session_state.scores[active] += 1
-            st.session_state.current_word = random.choice(st.session_state.all_words); st.rerun()
+            st.session_state.current_word = random.choice(st.session_state.all_words)
+            st.rerun()
         if c2.button("❌ СКІП"):
-            st.session_state.current_word = random.choice(st.session_state.all_words); st.rerun()
-        time.sleep(0.1); st.rerun()
-        # --- ЕКРАН 6: ФІНАЛ ---
-elif st.session_state.game_state == "finished":
-    if st.button("⬅️ ДО ВИБОРУ РЕЖИМУ"):
-        st.session_state.game_state = "mode_select"
+            # Можна знімати бал за скіп, якщо хочеш: st.session_state.scores[active] -= 1
+            st.session_state.current_word = random.choice(st.session_state.all_words)
+            st.rerun()
+            
+        time.sleep(0.1)
         st.rerun()
 
+# --- ЕКРАН 6: ФІНАЛ (ПЕРЕВІР ВІДСТУП, МАЄ БУТИ ВЛІВО) ---
+elif st.session_state.game_state == "finished":
     st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
-    for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
+    # Сортування результатів
+    sorted_scores = sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True)
+    
+    for n, s in sorted_scores:
         st.write(f"### {n}: {s} балів")
-    if st.button("В МЕНЮ 🔄"):
+    
+    st.divider()
+    if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
         st.session_state.game_state = "mode_select"
         st.session_state.current_player_idx = 0
         st.session_state.current_round = 1
