@@ -28,13 +28,20 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ЛОГІКА СЛОВНИКА ---
-def get_initial_words():
+# --- 3. РОБОТА З ФАЙЛОМ ---
+def load_words():
+    filename = "words.txt"
+    # Якщо файл існує, читаємо його
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            words = [line.strip() for line in f if line.strip()]
+            if words: return words
+    # Якщо файлу немає або він порожній - базовий набір
     return ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт"]
 
-# Ініціалізація "Вічної сесії"
+# Ініціалізація станів
 if 'all_words' not in st.session_state:
-    st.session_state.all_words = get_initial_words()
+    st.session_state.all_words = load_words()
 
 if 'msg_data' not in st.session_state:
     st.session_state.msg_data = {"text": None, "type": None}
@@ -43,7 +50,7 @@ if 'last_added_word' not in st.session_state:
     st.session_state.last_added_word = ""
 
 if 'game_state' not in st.session_state:
-    st.session_state.game_state = "setup" # setup, playing, finished
+    st.session_state.game_state = "setup"
     st.session_state.teams = {}
     st.session_state.team_names = []
     st.session_state.current_team_idx = 0
@@ -73,7 +80,6 @@ if st.session_state.game_state == "setup":
     with st.expander("➕ Додати своє дебільне слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         
-        # Поле вводу (використовуємо ключ, щоб не зникало)
         new_word_raw = st.text_input("Введи слово:", key="input_field")
 
         if st.button("ДОДАТИ В СЛОВНИК"):
@@ -82,16 +88,21 @@ if st.session_state.game_state == "setup":
             existing_low = [w.lower() for w in st.session_state.all_words]
 
             if word == "":
-                pass # Просто ігноруємо пусте натискання
+                pass
             elif low_word in existing_low:
                 st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
             else:
                 st.session_state.all_words.append(word)
                 st.session_state.last_added_word = word
                 st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                # Спроба зберегти у файл (працює локально, на сервері тимчасово)
+                try:
+                    with open("words.txt", "a", encoding="utf-8") as f:
+                        f.write(word + "\n")
+                except:
+                    pass
             st.rerun()
 
-        # Вивід фідбеку
         if st.session_state.msg_data["text"]:
             if st.session_state.msg_data["type"] == "success":
                 st.success(st.session_state.msg_data["text"])
@@ -116,7 +127,7 @@ if st.session_state.game_state == "setup":
         st.session_state.game_words = st.session_state.all_words.copy()
         random.shuffle(st.session_state.game_words)
         st.session_state.game_state = "playing"
-        st.session_state.msg_data = {"text": None, "type": None} # чистимо повідомлення перед грою
+        st.session_state.msg_data = {"text": None, "type": None}
         st.rerun()
 
 # --- ЕКРАН 3: ГРА ---
@@ -166,7 +177,6 @@ elif st.session_state.game_state == "finished":
         st.write(f"### {n}: {s} балів")
     
     if st.button("ЗІГРАТИ ЩЕ РАЗ 🔄"):
-        # Скидаємо гру, але ПАМ'ЯТАЄМО слова
         st.session_state.game_state = "setup"
         st.session_state.current_team_idx = 0
         st.session_state.current_round = 1
