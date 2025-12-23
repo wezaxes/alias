@@ -371,6 +371,91 @@ elif st.session_state.game_state == "playing_sync":
         
         time.sleep(1)
         st.rerun()
+
+    ref = db.collection("rooms").document(st.session_state.room_id)
+    doc = ref.get()
+    
+    if not doc.exists:
+        st.error("Кімнату втрачено!")
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+    
+    data = doc.to_dict()
+    my_name = st.session_state.my_name
+
+    # Налаштування (беремо з бази або сесії)
+    total_rounds = data.get("total_rounds", st.session_state.get("total_rounds", 3))
+    turn_duration = data.get("duration", st.session_state.get("duration", 60))
+
+    # ПЕРЕВІРКА НА ЗАКІНЧЕННЯ ГРИ
+    if data.get("current_round", 1) > total_rounds:
+        st.session_state.scores = data["scores"]
+        st.session_state.game_state = "finished"
+        st.rerun()
+
+    # Екран очікування пари або сама гра
+    if not data.get("explainer"):
+        st.title(f"Раунд {data.get('current_round', 1)} з {total_rounds}")
+        st.info("Очікуємо, поки хтось згенерує пару...")
+        if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
+            if len(data["players"]) < 2:
+                st.error("Треба мінімум 2 гравці!")
+            else:
+                p1, p2 = random.sample(data["players"], 2)
+                ref.update({
+                    "explainer": p1, 
+                    "listener": p2, 
+                    "word": random.choice(st.session_state.all_words), 
+                    "t_end": time.time() + turn_duration,
+                    "total_rounds": total_rounds,
+                    "duration": turn_duration
+                })
+                st.rerun()
+    else:
+        rem = int(data["t_end"] - time.time())
+        
+        # Час вийшов
+        if rem <= 0:
+            st.warning("Час вийшов!")
+            if st.button("Наступний раунд/пара"):
+                new_round = data.get("current_round", 1) + 1
+                ref.update({
+                    "explainer": "", 
+                    "listener": "", 
+                    "word": "", 
+                    "current_round": new_round
+                })
+                st.rerun()
+        else:
+            # Процес вгадування
+            st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+            
+            if my_name == data["explainer"]:
+                st.success("ТИ ПОЯСНЮЄШ!")
+                st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
+                
+                col1, col2 = st.columns(2)
+                if col1.button("✅ ВГАДАНО"):
+                    data["scores"][my_name] = data["scores"].get(my_name, 0) + 1
+                    ref.update({
+                        "scores": data["scores"], 
+                        "word": random.choice(st.session_state.all_words)
+                    })
+                    st.rerun()
+                if col2.button("❌ СКІП"):
+                    ref.update({
+                        "word": random.choice(st.session_state.all_words)
+                    })
+                    st.rerun()
+                    
+            elif my_name == data["listener"]:
+                st.warning("ТИ ВІДГАДУЄШ!")
+                st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
+            else:
+                st.info(f"Ви глядач. Зараз грають {data['explainer']} та {data['listener']}")
+        
+        time.sleep(1)
+        st.rerun()
 # --- СТАРИЙ IRL РЕЖИМ (ВИПРАВЛЕНИЙ) ---
 elif st.session_state.game_state == "playing_irl":
     # Перевірка на кінець гри перед початком ходу
