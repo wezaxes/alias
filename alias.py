@@ -131,31 +131,15 @@ elif st.session_state.game_state == "mode_select":
     col1, col2 = st.columns(2)
     
     with col1:
-        # Твій стиль mode-selection залишається, просто додаємо обгортку mode-container
-        st.markdown("""
-            <div class="mode-container">
-                <div class="mode-selection">
-                    <h3>🏠 IRL</h3>
-                    <p>Командна гра вживу</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        # Ця кнопка невидима, але вона ловить клік по всій площі div вище
-        if st.button("overlay_irl", key="overlay_irl"):
+        # Робимо кнопку, яка виглядає як твоя плита
+        # \n створює переноси рядків, щоб текст був як на плитці
+        if st.button("🏠 IRL\n\nКомандна гра вживу", key="btn_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
             st.rerun()
             
     with col2:
-        st.markdown("""
-            <div class="mode-container">
-                <div class="mode-selection">
-                    <h3>🎙️ DISCORD</h3>
-                    <p>Кругова гра через демку</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("overlay_discord", key="overlay_discord"):
+        if st.button("🎙️ DISCORD\n\nКругова гра через демку", key="btn_discord"):
             st.session_state.game_mode = "discord"
             st.session_state.game_state = "setup"
             st.rerun()
