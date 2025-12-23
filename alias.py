@@ -210,7 +210,7 @@ elif st.session_state.game_state == "setup":
     st.divider()
     
     if st.session_state.game_mode == "discord":
-        room_id = st.text_input("Код кімнати (наприклад: 777):", value="777").upper()
+        room_id = st.text_input("Код кімнати (наприклад: 777):", value=" ").upper()
         my_name = st.text_input("Твій нікнейм:")
         if st.button("ВХІД У КІМНАТУ 🔥"):
             st.session_state.room_id = room_id
