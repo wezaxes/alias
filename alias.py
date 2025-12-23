@@ -278,6 +278,15 @@ elif st.session_state.game_state == "sync_lobby":
 
 # --- ГРА (DISCORD SYNC) ---
 elif st.session_state.game_state == "playing_sync":
+    # --- БІЧНА ПАНЕЛЬ ДЛЯ ВИХОДУ ---
+    with st.sidebar:
+        st.write(f"👤 Гравець: **{st.session_state.my_name}**")
+        st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+        st.divider()
+        if st.button("🔴 ВИЙТИ В МЕНЮ"):
+            st.session_state.game_state = "mode_select"
+            st.rerun()
+
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
     
@@ -289,7 +298,7 @@ elif st.session_state.game_state == "playing_sync":
     data = doc.to_dict()
     my_name = st.session_state.my_name
 
-    # ВИПРАВЛЕННЯ: Беремо налаштування з бази, якщо в сесії порожньо (для другого гравця)
+    # Налаштування (беремо з бази або сесії)
     total_rounds = data.get("total_rounds", st.session_state.get("total_rounds", 3))
     turn_duration = data.get("duration", st.session_state.get("duration", 60))
 
@@ -299,8 +308,10 @@ elif st.session_state.game_state == "playing_sync":
         st.session_state.game_state = "finished"
         st.rerun()
 
+    # Екран очікування пари або сама гра
     if not data.get("explainer"):
         st.title(f"Раунд {data.get('current_round', 1)} з {total_rounds}")
+        st.info("Очікуємо, поки хтось згенерує пару...")
         if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
             if len(data["players"]) < 2:
                 st.error("Треба мінімум 2 гравці!")
@@ -311,12 +322,14 @@ elif st.session_state.game_state == "playing_sync":
                     "listener": p2, 
                     "word": random.choice(st.session_state.all_words), 
                     "t_end": time.time() + turn_duration,
-                    "total_rounds": total_rounds, # Про всяк випадок записуємо в базу
+                    "total_rounds": total_rounds,
                     "duration": turn_duration
                 })
                 st.rerun()
     else:
         rem = int(data["t_end"] - time.time())
+        
+        # Час вийшов
         if rem <= 0:
             st.warning("Час вийшов!")
             if st.button("Наступний раунд/пара"):
@@ -329,6 +342,7 @@ elif st.session_state.game_state == "playing_sync":
                 })
                 st.rerun()
         else:
+            # Процес вгадування
             st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
             
             if my_name == data["explainer"]:
