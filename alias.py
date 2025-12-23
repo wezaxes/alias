@@ -7,60 +7,62 @@ import os
 st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="🎮", layout="centered")
 
 # 2. Стилізація
-# 2. Стилізація
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
     
-    /* Звичайні кнопки (вгадано, скіп тощо) */
-    .stButton>button { 
+    /* Твоя плита (декор) */
+    .mode-selection {
+        padding: 30px; 
+        border-radius: 20px; 
+        background: #585b70; 
+        border: 3px solid #89b4fa; 
+        margin-bottom: 20px;
+        transition: 0.3s;
+        text-align: center;
+    }
+
+    /* Контейнер для накладання */
+    .button-container {
+        position: relative;
+        width: 100%;
+    }
+
+    /* ПРОЗОРІ КНОПКИ ПОВЕРХ ПЛИТ */
+    div.stButton > button[key*="overlay_"] {
+        position: absolute !important;
+        top: -215px !important; /* Підіймаємо кнопку прямо на плиту */
+        left: 0 !important;
+        width: 100% !important;
+        height: 190px !important;
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        z-index: 10 !important;
+        cursor: pointer !important;
+        box-shadow: none !important;
+    }
+
+    /* Ефект для плити, коли ми наводимо на прозору кнопку */
+    .button-container:hover .mode-selection {
+        background: #7f849c;
+        border-color: #fab387;
+        transform: scale(1.02);
+    }
+
+    /* Решта твоїх стилів */
+    h1, h2, h3, p { text-align: center !important; }
+    .mode-selection h3 { color: #f9e2af !important; margin-top: 0; }
+    .mode-selection p { color: #cdd6f4 !important; }
+    
+    /* Стиль для звичайних кнопок гри */
+    .stButton>button:not([key*="overlay_"]) { 
         width: 100%; max-width: 500px; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
-
-    /* КНОПКИ-ПЛИТИ (Твій стиль перенесений на кнопки) */
-    div.stButton > button[key*="mode_"] {
-        height: 180px !important;
-        background: #585b70 !important; 
-        border: 3px solid #89b4fa !important; 
-        border-radius: 20px !important;
-        color: #f9e2af !important;
-        font-size: 22px !important;
-        text-transform: none !important; /* Щоб текст не був тільки великими літерами */
-        transition: 0.3s !important;
-        white-space: pre-line !important; /* Щоб працював перенос рядка */
-        display: block !important;
-    }
-
-    div.stButton > button[key*="mode_"]:hover {
-        background: #7f849c !important;
-        border-color: #fab387 !important;
-        transform: scale(1.02) !important;
-    }
-
-    h1, h2, h3, p { text-align: center !important; }
-    .word-box { 
-        font-size: 42px; text-align: center; font-weight: bold; 
-        color: #f9e2af; background-color: #313244; padding: 50px; 
-        border-radius: 20px; border: 3px solid #89b4fa; margin: 20px 0; 
-    }
-    .disclaimer-box {
-        text-align: center; background-color: #45475a; 
-        padding: 25px; border-radius: 15px; border: 2px solid #f38ba8;
-    }
-    .waiting-screen {
-        background-color: #1e1e2e; padding: 50px; border-radius: 25px;
-        border: 3px dashed #fab387; color: #fab387; text-align: center;
-    }
-    .warning-text {
-        color: #f38ba8; font-weight: bold; font-size: 28px; 
-        border: 2px solid #f38ba8; padding: 10px; border-radius: 10px;
-        margin-top: 20px; text-transform: uppercase;
-    }
     </style>
 """, unsafe_allow_html=True)
-
 
 # --- 3. РОБОТА З ФАЙЛОМ ---
 def load_words():
@@ -114,26 +116,43 @@ if st.session_state.game_state == "welcome":
     st.stop()
 
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
-# --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Кнопка тепер сама є плитою
-        if st.button("🏠 IRL\n\nКомандна гра вживу", key="mode_irl"):
+        st.markdown('<div class="button-container">', unsafe_allow_html=True)
+        # Твоя красива плита
+        st.markdown("""
+            <div class="mode-selection">
+                <h3>🏠 IRL</h3>
+                <p>Командна гра вживу</p>
+            </div>
+        """, unsafe_allow_html=True)
+        # Прозора кнопка-накладка
+        if st.button(" ", key="overlay_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
             
     with col2:
-        if st.button("🎙️ DISCORD\n\nКругова гра через демку", key="mode_discord"):
+        st.markdown('<div class="button-container">', unsafe_allow_html=True)
+        # Твоя красива плита
+        st.markdown("""
+            <div class="mode-selection">
+                <h3>🎙️ DISCORD</h3>
+                <p>Кругова гра через демку</p>
+            </div>
+        """, unsafe_allow_html=True)
+        # Прозора кнопка-накладка
+        if st.button(" ", key="overlay_discord"):
             st.session_state.game_mode = "discord"
             st.session_state.game_state = "setup"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
