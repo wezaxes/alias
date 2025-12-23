@@ -112,18 +112,21 @@ if st.session_state.game_state == "welcome":
     st.stop()
 
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
+# --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
+    st.write("Тисни на картку, щоб почати:")
+    
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("<div class='mode-selection'><h3>🏠 IRL (Вживу)</h3><p>Командний батл. Передавайте телефон.</p></div>", unsafe_allow_html=True)
-        if st.button("РЕЖИМ IRL"):
+        # Текст \n робить перенос рядка всередині кнопки
+        if st.button("🏠\nIRL\n(Вживу)", key="btn_irl"):
             st.session_state.game_mode = "irl"
             st.session_state.game_state = "setup"
             st.rerun()
+            
     with col2:
-        st.markdown("<div class='mode-selection'><h3>🎙️ DISCORD</h3><p>Один стрім. Гра по колу (кожен з кожним).</p></div>", unsafe_allow_html=True)
-        if st.button("РЕЖИМ DISCORD"):
+        if st.button("🎙️\nDISCORD\n(Через демку)", key="btn_discord"):
             st.session_state.game_mode = "discord"
             st.session_state.game_state = "setup"
             st.rerun()
