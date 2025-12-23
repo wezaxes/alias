@@ -1,195 +1,134 @@
-import tkinter as tk
-from tkinter import messagebox, simpledialog
+import streamlit as st
 import random
-import os
+import time
 
-def load_words():
-    filename = 'words.txt'
-    if not os.path.exists(filename):
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write("Україна\nБорщ\nКава\nПрограмування\n")
-        return ["Україна", "Борщ", "Кава", "Програмування"]
-    with open(filename, 'r', encoding='utf-8') as f:
-        words = [line.strip() for line in f.readlines() if line.strip()]
-    return words if words else ["Кіт", "Сонце", "Київ"]
+# --- НАЛАШТУВАННЯ ТА БРЕНДИНГ ---
+st.set_page_config(page_title="Alias - Wezaxes Edition", layout="centered")
 
-def save_new_word(word):
-    with open('words.txt', 'a', encoding='utf-8') as f:
-        f.write(f"\n{word}")
+# Стилізація великих кнопок через CSS
+st.markdown("""
+    <style>
+    div.stButton > button:first-child {
+        height: 100px;
+        width: 100%;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 15px;
+        margin-bottom: 10px;
+    }
+    .st-emotion-cache-12fmjuu { 
+        font-size: 30px !important; 
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-class AliasUltimate:
-    def __init__(self, root):
-        self.root = root
-        self.root.withdraw()
-        self.show_welcome_screen()
+# Ініціалізація бази слів у сесії
+if 'words' not in st.session_state:
+    st.session_state.words = ["Україна", "Борщ", "Кава", "Велосипед", "Програміст", "iPhone", "Кіт", "Паляниця"]
 
-    def show_welcome_screen(self):
-        welcome = tk.Toplevel(self.root)
-        welcome.title("WEZAXES ENTERTAINMENT")
-        welcome.geometry("450x300")
-        welcome.configure(bg='#11111b')
-        welcome.resizable(False, False)
+if 'scores' not in st.session_state:
+    st.session_state.scores = {}
+    st.session_state.game_started = False
+    st.session_state.current_round = 1
+    st.session_state.team_idx = 0
+    st.session_state.welcome_done = False
 
-        tk.Label(welcome, text="WEZAXES ENTERTAINMENT", font=("Courier New", 14, "bold"), 
-                 bg='#11111b', fg='#fab387').pack(pady=10)
-        
-        tk.Label(welcome, text="УВАГА!", font=("Segoe UI", 24, "bold"), 
-                 bg='#11111b', fg='#f38ba8').pack()
-        
-        tk.Label(welcome, text="Це СУПЕР пробна версія.\nСлова і все інше ше буде\nдопрацьовуватись.", 
-                 font=("Segoe UI", 13), bg='#11111b', fg='#cdd6f4', justify="center").pack(pady=10)
+# --- ВІКНО ПРИВІТАННЯ ---
+if not st.session_state.welcome_done:
+    st.title("🚀 WEZAXES ENTERTAINMENT")
+    st.error("### УВАГА!")
+    st.write("Це СУПЕР пробна версія. Слова і все інше ше буде допрацьовуватись.")
+    if st.button("ЛАДНО"):
+        st.session_state.welcome_done = True
+        st.rerun()
+    st.stop()
 
-        def close_welcome():
-            welcome.destroy()
-            self.root.deiconify()
-            self.start_initialization()
-
-        tk.Button(welcome, text="ЛАДНО", font=("Segoe UI", 12, "bold"), 
-                  bg='#89b4fa', fg='#11111b', width=20, height=2, 
-                  command=close_welcome).pack(pady=15)
-
-    def start_initialization(self):
-        self.all_words = load_words()
-        self.teams = []
-        self.scores = {}
-        self.current_team_idx = 0
-        self.current_round = 1
-        self.timer_running = False
-        self.setup_game()
-
-    def setup_game(self):
-        self.root.title("Alias - Wezaxes Edition")
-        self.root.geometry("500x750")
-        self.root.configure(bg='#1e1e2e')
-
-        n_teams = simpledialog.askinteger("Старт", "Скільки команд?", minvalue=2, maxvalue=6) or 2
-        for i in range(n_teams):
-            name = simpledialog.askstring("Команди", f"Назва команди {i+1}:") or f"Команда {i+1}"
-            self.teams.append(name)
-            self.scores[name] = 0
-
-        self.total_rounds = simpledialog.askinteger("Раунди", "Кількість раундів:", minvalue=1) or 3
-        self.round_duration = simpledialog.askinteger("Час", "Секунд на раунд:", minvalue=5) or 60
-        
-        self.create_widgets()
-        self.update_ui()
-
-    def create_widgets(self):
-        # Інфо панель
-        self.info_label = tk.Label(self.root, text="", font=("Segoe UI", 14, "bold"), bg='#1e1e2e', fg='#cdd6f4')
-        self.info_label.pack(pady=10)
-
-        self.timer_label = tk.Label(self.root, text="--", font=("Consolas", 30, "bold"), bg='#1e1e2e', fg='#f38ba8')
-        self.timer_label.pack()
-
-        # Поле слова
-        self.word_frame = tk.Frame(self.root, bg='#313244', height=150)
-        self.word_frame.pack(pady=10, padx=30, fill="x")
-        self.word_frame.pack_propagate(False) # Щоб фрейм не стискався під текст
-        
-        self.word_label = tk.Label(self.word_frame, text="ГОТОВІ?", font=("Segoe UI", 32, "bold"), 
-                                  bg='#313244', fg='#f9e2af', wraplength=400)
-        self.word_label.pack(expand=True)
-
-        # Великі кнопки (Вертикальні)
-        self.game_btns_frame = tk.Frame(self.root, bg='#1e1e2e')
-        self.game_btns_frame.pack(pady=10, padx=30, fill="x")
-
-        self.ok_btn = tk.Button(self.game_btns_frame, text="ВГАДАНО ✅", font=("Segoe UI", 20, "bold"), 
-                               bg='#a6e3a1', fg='#11111b', height=3, command=self.word_guessed, state="disabled")
-        self.ok_btn.pack(fill="x", pady=5)
-
-        self.skip_btn = tk.Button(self.game_btns_frame, text="СКІП ❌", font=("Segoe UI", 20, "bold"), 
-                                 bg='#f38ba8', fg='#11111b', height=3, command=self.word_skipped, state="disabled")
-        self.skip_btn.pack(fill="x", pady=5)
-
-        # Кнопка СТАРТ
-        self.start_btn = tk.Button(self.root, text="ПОЧАТИ РАУНД", font=("Segoe UI", 16, "bold"), 
-                                  bg='#89b4fa', fg='#11111b', height=2, command=self.start_round)
-        self.start_btn.pack(pady=15, padx=30, fill="x")
-
-        # Кнопка Додати слово
-        self.add_word_btn = tk.Button(self.root, text="+ Додати нове слово в базу", font=("Segoe UI", 10), 
-                                     bg='#45475a', fg='#cdd6f4', bd=0, command=self.add_custom_word)
-        self.add_word_btn.pack(side="bottom", pady=10)
-
-    def add_custom_word(self):
-        new_w = simpledialog.askstring("Словник", "Введіть нове слово:")
+# --- НАЛАШТУВАННЯ ГРИ ---
+if not st.session_state.game_started:
+    st.title("⚙️ Налаштування Alias")
+    
+    n_teams = st.number_input("Скільки команд?", 2, 6, 2)
+    teams = []
+    for i in range(n_teams):
+        name = st.text_input(f"Назва команди {i+1}", f"Команда {i+1}")
+        teams.append(name)
+    
+    rounds = st.number_input("Кількість раундів", 1, 20, 3)
+    r_time = st.number_input("Час раунду (сек)", 10, 300, 60)
+    
+    if st.button("ПОЧАТИ ГРУ"):
+        st.session_state.teams = teams
+        st.session_state.scores = {name: 0 for name in teams}
+        st.session_state.total_rounds = rounds
+        st.session_state.duration = r_time
+        st.session_state.game_started = True
+        st.rerun()
+    
+    # Додавання слів
+    st.divider()
+    new_w = st.text_input("Додати нове слово в базу:")
+    if st.button("Додати"):
         if new_w:
-            save_new_word(new_w)
-            self.all_words.append(new_w)
-            messagebox.showinfo("Wezaxes Cloud", f"Слово '{new_w}' додано до бази!")
+            st.session_state.words.append(new_w)
+            st.success(f"Слово '{new_w}' додано!")
 
-    def update_ui(self):
-        team = self.teams[self.current_team_idx]
-        self.info_label.config(text=f"РАУНД {self.current_round}/{self.total_rounds}\nКОМАНДА: {team.upper()}")
-
-    def start_round(self):
-        self.time_left = self.round_duration
-        self.timer_running = True
-        self.start_btn.config(state="disabled", bg="#45475a")
-        self.ok_btn.config(state="normal")
-        self.skip_btn.config(state="normal")
-        self.next_word()
-        self.tick()
-
-    def tick(self):
-        if self.time_left > 0 and self.timer_running:
-            self.timer_label.config(text=f"{self.time_left:02d}")
-            self.time_left -= 1
-            self.root.after(1000, self.tick)
-        elif self.time_left == 0:
-            self.end_round()
-
-    def next_word(self):
-        if self.all_words:
-            self.current_word = random.choice(self.all_words)
-            self.word_label.config(text=self.current_word.upper())
-        else:
-            messagebox.showwarning("Wezaxes", "Слова закінчилися!")
-            self.end_round()
-
-    def word_guessed(self):
-        self.scores[self.teams[self.current_team_idx]] += 1
-        if self.current_word in self.all_words:
-            self.all_words.remove(self.current_word)
-        self.next_word()
-
-    def word_skipped(self):
-        self.scores[self.teams[self.current_team_idx]] -= 1
-        self.next_word()
-
-    def end_round(self):
-        self.timer_running = False
-        self.ok_btn.config(state="disabled")
-        self.skip_btn.config(state="disabled")
-        self.start_btn.config(state="normal", bg="#89b4fa")
-        self.word_label.config(text="ЧАС ВИЙШОВ")
+else:
+    # --- ІГРОВИЙ ЕКРАН ---
+    team_list = st.session_state.teams
+    current_team = team_list[st.session_state.team_idx]
+    
+    st.subheader(f"Раунд {st.session_state.current_round} / {st.session_state.total_rounds}")
+    st.info(f"Зараз грає: **{current_team.upper()}**")
+    
+    if 'round_active' not in st.session_state or not st.session_state.round_active:
+        if st.button(f"ПОЧАТИ РАУНД ({current_team})"):
+            st.session_state.round_active = True
+            st.session_state.start_time = time.time()
+            st.session_state.current_word = random.choice(st.session_state.words)
+            st.rerun()
+    else:
+        # Раунд активний
+        elapsed = time.time() - st.session_state.start_time
+        remaining = int(st.session_state.duration - elapsed)
         
-        current_team = self.teams[self.current_team_idx]
+        if remaining <= 0:
+            st.session_state.round_active = False
+            st.session_state.team_idx += 1
+            if st.session_state.team_idx >= len(team_list):
+                st.session_state.team_idx = 0
+                st.session_state.current_round += 1
+            
+            if st.session_state.current_round > st.session_state.total_rounds:
+                st.success("ГРА ЗАВЕРШЕНА!")
+                st.write(st.session_state.scores)
+                if st.button("Нова гра"):
+                    st.session_state.game_started = False
+                    st.rerun()
+            else:
+                st.warning("ЧАС ВИЙШОВ!")
+                st.rerun()
         
-        if self.current_team_idx < len(self.teams) - 1:
-            self.current_team_idx += 1
-        else:
-            self.current_team_idx = 0
-            self.current_round += 1
+        st.metric("Залишилось часу", f"{remaining} сек")
         
-        if self.current_round > self.total_rounds:
-            self.show_winner()
-        else:
-            res_text = f"Команда {current_team} тепер має {self.scores[current_team]} балів.\n\nНаступні: {self.teams[self.current_team_idx]}"
-            messagebox.showinfo("Кінець раунду", res_text)
-            self.update_ui()
+        # Відображення слова
+        st.markdown(f"""
+            <div style="background-color: #313244; padding: 40px; border-radius: 15px; text-align: center; margin: 20px 0;">
+                <h1 style="color: #f9e2af; margin: 0;">{st.session_state.current_word.upper()}</h1>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Великі кнопки одна під одною
+        if st.button("✅ ВГАДАНО (+1)"):
+            st.session_state.scores[current_team] += 1
+            st.session_state.current_word = random.choice(st.session_state.words)
+            st.rerun()
+            
+        if st.button("❌ СКІП (-1)"):
+            st.session_state.scores[current_team] -= 1
+            st.session_state.current_word = random.choice(st.session_state.words)
+            st.rerun()
 
-    def show_winner(self):
-        res = "ФІНАЛЬНИЙ РАХУНОК WEZAXES:\n\n"
-        sorted_res = sorted(self.scores.items(), key=lambda x: x[1], reverse=True)
-        for t, s in sorted_res:
-            res += f"{t}: {s} балів\n"
-        messagebox.showinfo("Гра закінчена", res)
-        self.root.destroy()
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = AliasUltimate(root)
-    root.mainloop()
+    # Поточний рахунок внизу
+    st.divider()
+    st.write("### Рахунок:")
+    st.write(st.session_state.scores)
