@@ -13,7 +13,7 @@ st.markdown("""
     
     /* Основні кнопки */
     .stButton>button { 
-        width: 100%; max-width: 500px; height: 4.5em; 
+        width: 100%; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
@@ -70,8 +70,28 @@ st.markdown("""
     }
     .mode-selection h3 { color: #f9e2af !important; margin-top: 0; }
     .mode-selection p { color: #cdd6f4 !important; }
+    
     </style>
-""", unsafe_allow_html=True)
+    # Отдельный код по кнпки
+st.markdown("""
+    <style>
+            
+    div[data-testid="stVerticalBlock"] > div.stElementContainer {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    div.stButton {
+        width: 100%;
+        display: flex;  
+        justify-content: center;
+    }
+
+    div.stButton > button {
+        width: 100%;
+    }     
+    </style>
+    """, unsafe_allow_html=True)
 
 
 # --- 3. РОБОТА З ФАЙЛОМ ---
