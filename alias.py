@@ -252,7 +252,10 @@ elif st.session_state.game_state == "setup":
             random.shuffle(st.session_state.game_words)
             st.session_state.current_player_idx = 0
             st.session_state.current_round = 1
-            st.session_state.game_state = "waiting" if game_mode == "discord" else "playing"
+            if st.session_state.game_mode == "discord":
+                st.session_state.game_state = "waiting"
+            else:
+                st.session_state.game_state = "playing"
             st.rerun()
 
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
