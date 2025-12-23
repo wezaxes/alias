@@ -400,14 +400,13 @@ else:
         time.sleep(1)
         st.rerun()
 # --- СТАРИЙ IRL РЕЖИМ (ОНОВЛЕНИЙ: SIDEBAR + ВИХІД) ---
-elif st.session_state.game_state == "playing_irl":
+    elif st.session_state.game_state == "playing_irl":
     # --- БІЧНА ПАНЕЛЬ (Рахунок та вихід) ---
-    with st.sidebar:
-        st.markdown("### 📊 Рахунок команд")
-        for player, score in st.session_state.scores.items():
-            st.write(f"{player}: **{score}** ⭐")
-        
-        st.divider()
+        with st.sidebar:
+            st.markdown("### 📊 Рахунок команд")
+            for player, score in st.session_state.scores.items():
+                st.write(f"{player}: **{score}** ⭐")
+            st.divider()
         
         if st.button("🔴 ВИЙТИ ДО НАЛАШТУВАНЬ"):
             st.session_state.game_state = "setup"
