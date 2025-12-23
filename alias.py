@@ -57,6 +57,19 @@ st.markdown("""
     .mode-selection p {
         color: #cdd6f4 !important; /* Світлий текст опису */
     }
+        /* Робимо контейнер відносним, щоб кнопка всередині не вилітала за межі */
+    .mode-container { position: relative; }
+
+    /* Ховаємо кнопку, але розтягуємо її на всю площу картки */
+    div.stButton > button[key*="overlay_"] {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        z-index: 10;
+        cursor: pointer;
+    }
     </style>
 """, unsafe_allow_html=True)
 
