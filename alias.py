@@ -473,7 +473,7 @@ else:
         st.rerun()
 
 # --- ЕКРАН 6: ФІНАЛ (ПЕРЕВІР ВІДСТУП, МАЄ БУТИ ВЛІВО) ---
-elif st.session_state.game_state == "finished":
+    elif st.session_state.game_state == "finished":
     st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
     # Сортування результатів
     sorted_scores = sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True)
