@@ -354,17 +354,17 @@ if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
 else:
     rem = int(data["t_end"] - time.time())
         # Час вийшов
-        if rem <= 0:
-            st.warning("Час вийшов!")
-            if st.button("Наступний раунд/пара"):
-                new_round = data.get("current_round", 1) + 1
-                ref.update({
-                    "explainer": "", 
-                    "listener": "", 
-                    "word": "", 
-                    "current_round": new_round
-                })
-                st.rerun()
+    if rem <= 0:
+        st.warning("Час вийшов!")
+        if st.button("Наступний раунд/пара"):
+            new_round = data.get("current_round", 1) + 1
+            ref.update({
+                "explainer": "", 
+                "listener": "", 
+                "word": "", 
+                "current_round": new_round
+            })
+            st.rerun()
         else:
             # Процес вгадування
             st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
