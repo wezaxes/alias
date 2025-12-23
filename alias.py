@@ -43,13 +43,18 @@ st.markdown("""
 # --- 3. РОБОТА З ФАЙЛОМ ---
 def load_words():
     filename = "words.txt"
-    # Якщо файл існує, читаємо його
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             words = [line.strip() for line in f if line.strip()]
             if words: return words
-    # Якщо файлу немає або він порожній - базовий набір
     return ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт"]
+
+def append_word_to_file(word):
+    try:
+        with open("words.txt", "a", encoding="utf-8") as f:
+            f.write(word + "\n")
+    except:
+        pass
 
 # Ініціалізація станів
 if 'all_words' not in st.session_state:
@@ -62,10 +67,11 @@ if 'last_added_word' not in st.session_state:
     st.session_state.last_added_word = ""
 
 if 'game_state' not in st.session_state:
-    st.session_state.game_state = "setup"
-    st.session_state.teams = {}
-    st.session_state.team_names = []
-    st.session_state.current_team_idx = 0
+    st.session_state.game_state = "welcome"
+    st.session_state.game_mode = None
+    st.session_state.players = []
+    st.session_state.scores = {}
+    st.session_state.current_player_idx = 0
     st.session_state.current_round = 1
     st.session_state.welcome_done = False
 
@@ -104,12 +110,11 @@ elif st.session_state.game_state == "mode_select":
     st.stop()
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
-if st.session_state.game_state == "setup":
+elif st.session_state.game_state == "setup":
     st.title("⚙️ Налаштування Alias")
     
     with st.expander("➕ Додати своє дебільне слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
-        
         new_word_raw = st.text_input("Введи слово:", key="input_field")
 
         if st.button("ДОДАТИ В СЛОВНИК"):
@@ -125,12 +130,7 @@ if st.session_state.game_state == "setup":
                 st.session_state.all_words.append(word)
                 st.session_state.last_added_word = word
                 st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
-                # Спроба зберегти у файл (працює локально, на сервері тимчасово)
-                try:
-                    with open("words.txt", "a", encoding="utf-8") as f:
-                        f.write(word + "\n")
-                except:
-                    pass
+                append_word_to_file(word)
             st.rerun()
 
         if st.session_state.msg_data["text"]:
@@ -144,7 +144,8 @@ if st.session_state.game_state == "setup":
 
     st.divider()
     
-    if st.session_state.game_mode == "irl":
+    g_mode = st.session_state.game_mode
+    if g_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
     else:
@@ -152,7 +153,7 @@ if st.session_state.game_state == "setup":
         names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
         names = [n.strip() for n in names_raw.replace('\n', ',').split(',') if n.strip()]
 
-    rounds = st.number_input("Кількість повних кіл (раундів)", 1, 20, 3)
+    rounds = st.number_input("Кількість раундів", 1, 20, 3)
     timer = st.slider("Секунди на хід", 10, 120, 60)
 
     if st.button("🔥 ПОЧАТИ ГРУ"):
@@ -167,10 +168,10 @@ if st.session_state.game_state == "setup":
             random.shuffle(st.session_state.game_words)
             st.session_state.current_player_idx = 0
             st.session_state.current_round = 1
-            st.session_state.game_state = "waiting" if st.session_state.game_mode == "discord" else "playing"
+            st.session_state.game_state = "waiting" if g_mode == "discord" else "playing"
             st.rerun()
 
-# --- ЕКРАН 4: ОЧІКУВАННЯ (Тільки Discord) ---
+# --- ЕКРАН 4: ОЧІКУВАННЯ (DISCORD) ---
 elif st.session_state.game_state == "waiting":
     idx = st.session_state.current_player_idx
     explainer = st.session_state.players[idx]
@@ -207,11 +208,9 @@ elif st.session_state.game_state == "playing":
             st.rerun()
     else:
         rem = int(st.session_state.duration - (time.time() - st.session_state.start_time))
-        
         if rem <= 0:
             st.session_state.turn_active = False
             st.session_state.current_player_idx += 1
-            
             if st.session_state.current_player_idx >= len(st.session_state.players):
                 st.session_state.current_player_idx = 0
                 st.session_state.current_round += 1
@@ -242,7 +241,7 @@ elif st.session_state.game_state == "finished":
     st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
     for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
         st.write(f"### {n}: {s} балів")
-    if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
+    if st.button("В МЕНЮ 🔄"):
         st.session_state.game_state = "mode_select"
         st.session_state.current_player_idx = 0
         st.session_state.current_round = 1
