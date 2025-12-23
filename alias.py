@@ -149,6 +149,11 @@ elif st.session_state.game_state == "mode_select":
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
+    # КНОПКА НАЗАД
+    if st.button("⬅️ НАЗАД"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     st.title("⚙️ Налаштування Alias")
     
     with st.expander("➕ Додати своє дебільне слово"):
@@ -211,6 +216,11 @@ elif st.session_state.game_state == "setup":
 
 # --- ЕКРАН 4: ОЧІКУВАННЯ (DISCORD) ---
 elif st.session_state.game_state == "waiting":
+    # КНОПКА НАЗАД
+    if st.button("⬅️ НАЗАД"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     idx = st.session_state.current_player_idx
     explainer = st.session_state.players[idx]
     listener = st.session_state.players[(idx + 1) % len(st.session_state.players)]
@@ -235,6 +245,11 @@ elif st.session_state.game_state == "waiting":
 
 # --- ЕКРАН 5: ГРА ---
 elif st.session_state.game_state == "playing":
+    # КНОПКА НАЗАД
+    if st.button("⬅️ ПЕРЕрвати ГРУ"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     active_name = st.session_state.players[st.session_state.current_player_idx]
 
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
@@ -276,6 +291,11 @@ elif st.session_state.game_state == "playing":
 
 # --- ЕКРАН 6: ФІНАЛ ---
 elif st.session_state.game_state == "finished":
+    # КНОПКА НАЗАД
+    if st.button("⬅️ ДО ВИБОРУ РЕЖИМУ"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
     for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
         st.write(f"### {n}: {s} балів")
