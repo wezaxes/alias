@@ -78,7 +78,9 @@ if st.session_state.game_state == "welcome":
     st.markdown("""
         <div class="disclaimer-box">
             <h2 style='color: #f38ba8; margin-top: 0;'>УВАГА КОД ПИСАЛА ЖІНКА‼️</h2>
-            <p style='font-size: 18px; color: #cdd6f4;'>Версія 2.0: Режим Discord з круговою порукою активовано.</p>
+            <p style='font-size: 18px; color: #cdd6f4;'>
+                Це <b>СУПЕР пробна версія</b>. Шанс отримати дибільне слово <b>70%</b>.
+            </p>
         </div>
     """, unsafe_allow_html=True)
     if st.button("ЛАДНО ✅"):
