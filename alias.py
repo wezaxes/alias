@@ -373,8 +373,21 @@ elif st.session_state.game_state == "playing_sync":
         
         time.sleep(1)
         st.rerun()
-# --- СТАРИЙ IRL РЕЖИМ (ВИПРАВЛЕНИЙ) ---
+# --- СТАРИЙ IRL РЕЖИМ (ОНОВЛЕНИЙ: SIDEBAR + ВИХІД) ---
 elif st.session_state.game_state == "playing_irl":
+    # --- БІЧНА ПАНЕЛЬ (Рахунок та вихід) ---
+    with st.sidebar:
+        st.markdown("### 📊 Рахунок команд")
+        for player, score in st.session_state.scores.items():
+            st.write(f"{player}: **{score}** ⭐")
+        
+        st.divider()
+        
+        if st.button("🔴 ВИЙТИ ДО НАЛАШТУВАНЬ"):
+            st.session_state.game_state = "setup"
+            st.session_state.game_mode = "irl"
+            st.rerun()
+
     # Перевірка на кінець гри перед початком ходу
     if st.session_state.current_round > st.session_state.total_rounds:
         st.session_state.game_state = "finished"
@@ -415,7 +428,6 @@ elif st.session_state.game_state == "playing_irl":
             st.session_state.current_word = random.choice(st.session_state.all_words)
             st.rerun()
         if c2.button("❌ СКІП"):
-            # Можна знімати бал за скіп, якщо хочеш: st.session_state.scores[active] -= 1
             st.session_state.current_word = random.choice(st.session_state.all_words)
             st.rerun()
             
