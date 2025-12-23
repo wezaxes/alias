@@ -10,22 +10,25 @@ st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="�
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
+    
+    /* Основні кнопки */
     .stButton>button { 
         width: 100%; max-width: 500px; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
+
     /* ВУЗЬКА ТА МАЛЕНЬКА КНОПКА НАЗАД */
-div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
-    width: auto !important;           /* Ширина по тексту, а не на весь екран */
-    min-width: 120px !important;      /* Мінімальна ширина */
-    height: 2.2em !important;         /* Невелика висота */
-    font-size: 14px !important;       /* Менший шрифт */
-    padding: 0px 15px !important;     /* Відступи всередині */
-    background: #45475a !important;   /* Темніший колір, щоб не відволікати */
-    border: 1px solid #89b4fa !important; /* Тонка рамка */
-    margin-left: 0 !important;        /* Притиснути вліво */
-}
+    div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
+        width: auto !important;
+        min-width: 150px !important;
+        height: 2.5em !important;
+        font-size: 14px !important;
+        margin-left: 0 !important;
+        padding: 5px 20px !important;
+        background: #45475a !important;
+        border: 1px solid #89b4fa !important;
+    }
 
     h1, h2, h3, p { text-align: center !important; }
     .word-box { 
