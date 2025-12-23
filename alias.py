@@ -280,6 +280,7 @@ elif st.session_state.game_state == "sync_lobby":
 elif st.session_state.game_state == "playing_sync":
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
+    
     if not doc.exists:
         st.error("Кімнату втрачено!")
         st.session_state.game_state = "mode_select"
@@ -288,30 +289,37 @@ elif st.session_state.game_state == "playing_sync":
     data = doc.to_dict()
     my_name = st.session_state.my_name
 
-    # 1. ПЕРЕВІРКА НА ЗАКІНЧЕННЯ ГРИ
-    # Використовуємо ліміт раундів з налаштувань
-    if data.get("current_round", 1) > st.session_state.total_rounds:
+    # ВИПРАВЛЕННЯ: Беремо налаштування з бази, якщо в сесії порожньо (для другого гравця)
+    total_rounds = data.get("total_rounds", st.session_state.get("total_rounds", 3))
+    turn_duration = data.get("duration", st.session_state.get("duration", 60))
+
+    # ПЕРЕВІРКА НА ЗАКІНЧЕННЯ ГРИ
+    if data.get("current_round", 1) > total_rounds:
         st.session_state.scores = data["scores"]
         st.session_state.game_state = "finished"
         st.rerun()
 
     if not data.get("explainer"):
-        st.title(f"Раунд {data.get('current_round', 1)} з {st.session_state.total_rounds}")
+        st.title(f"Раунд {data.get('current_round', 1)} з {total_rounds}")
         if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
-            p1, p2 = random.sample(data["players"], 2)
-            ref.update({
-                "explainer": p1, 
-                "listener": p2, 
-                "word": random.choice(st.session_state.all_words), 
-                "t_end": time.time() + st.session_state.duration
-            })
-            st.rerun()
+            if len(data["players"]) < 2:
+                st.error("Треба мінімум 2 гравці!")
+            else:
+                p1, p2 = random.sample(data["players"], 2)
+                ref.update({
+                    "explainer": p1, 
+                    "listener": p2, 
+                    "word": random.choice(st.session_state.all_words), 
+                    "t_end": time.time() + turn_duration,
+                    "total_rounds": total_rounds, # Про всяк випадок записуємо в базу
+                    "duration": turn_duration
+                })
+                st.rerun()
     else:
         rem = int(data["t_end"] - time.time())
         if rem <= 0:
             st.warning("Час вийшов!")
-            if st.button("Наступний раунд"):
-                # Збільшуємо номер раунду в базі
+            if st.button("Наступний раунд/пара"):
                 new_round = data.get("current_round", 1) + 1
                 ref.update({
                     "explainer": "", 
@@ -327,10 +335,9 @@ elif st.session_state.game_state == "playing_sync":
                 st.success("ТИ ПОЯСНЮЄШ!")
                 st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
                 
-                # ДОДАЄМО КНОПКИ В ДВІ КОЛОНКИ
                 col1, col2 = st.columns(2)
                 if col1.button("✅ ВГАДАНО"):
-                    data["scores"][my_name] += 1
+                    data["scores"][my_name] = data["scores"].get(my_name, 0) + 1
                     ref.update({
                         "scores": data["scores"], 
                         "word": random.choice(st.session_state.all_words)
@@ -346,7 +353,7 @@ elif st.session_state.game_state == "playing_sync":
                 st.warning("ТИ ВІДГАДУЄШ!")
                 st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
             else:
-                st.info("Ви глядач")
+                st.info(f"Ви глядач. Зараз грають {data['explainer']} та {data['listener']}")
         
         time.sleep(1)
         st.rerun()
