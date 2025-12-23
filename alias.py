@@ -119,10 +119,7 @@ elif st.session_state.game_state == "mode_select":
     if "mode" in params:
         st.session_state.game_mode = params["mode"]
         st.session_state.game_state = "setup"
-        st.query_params.
-
-> asya:
-clear() # Очищуємо, щоб не зациклилось
+        st.query_params.clear() # Очищуємо, щоб не зациклилось
         st.rerun()
 
     col1, col2 = st.columns(2)
@@ -186,7 +183,7 @@ elif st.session_state.game_state == "setup":
                 st.error(st.session_state.msg_data["text"])
         
         if st.session_state.last_added_word:
-            st.markdown(f"✅ Останнє додане: {st.session_state.last_added_word}")
+            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
 
     st.divider()
     
@@ -229,9 +226,7 @@ elif st.session_state.game_state == "waiting":
     listener = st.session_state.players[(idx + 1) % len(st.session_state.players)]
     
     st.markdown(f"""
-
-> asya:
-<div class="waiting-screen">
+        <div class="waiting-screen">
             <h1 style="margin-bottom:0;">🤫 ТССС, ГОТУЄМОСЬ!</h1>
             <p style="font-size:18px;">Коло {st.session_state.current_round} з {st.session_state.total_rounds}</p>
             <hr style="border: 1px solid #45475a;">
@@ -241,7 +236,7 @@ elif st.session_state.game_state == "waiting":
         </div>
     """, unsafe_allow_html=True)
     
-    if st.button("ВІДГАДУВАЧ ПІШОВ — ПОЧИНАЄМО! ▶️"):
+    if st.button("ВІДГАДУВАЧ ПІШОВ — ПОЧИНАЕМ! ▶️"):
         st.session_state.turn_active = True
         st.session_state.start_time = time.time()
         st.session_state.current_word = st.session_state.game_words.pop(0) if st.session_state.game_words else "КІНЕЦЬ"
@@ -251,7 +246,7 @@ elif st.session_state.game_state == "waiting":
 # --- ЕКРАН 5: ГРА ---
 elif st.session_state.game_state == "playing":
     # КНОПКА НАЗАД
-    if st.button("⬅️ ПЕРЕрвати ГРУ"):
+    if st.button("⬅️ ПЕРЕРВАТИ ГРУ"):
         st.session_state.game_state = "mode_select"
         st.rerun()
 
