@@ -10,38 +10,11 @@ st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="�
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
-    
-    /* Основні кнопки */
     .stButton>button { 
         width: 100%; max-width: 500px; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
-    /* ШМАТОК ДЛЯ ВСТАВКИ В <style> */
-    div[data-testid="stButton"] >
-    button:has(div:contains("⬅️")) {
-    width: auto !important;
-        min-width: 120px !important;
-        height: 2.2em !important;
-        font-size: 14px !important;
-        padding: 0px 15px !important;
-        background: #45475a !important;
-        border: 1px solid #89b4fa !important;
-        margin-left: 0 !important;
-    }
-
-    /* ВУЗЬКА ТА МАЛЕНЬКА КНОПКА НАЗАД */
-    div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
-        width: auto !important;
-        min-width: 150px !important;
-        height: 2.5em !important;
-        font-size: 14px !important;
-        margin-left: 0 !important;
-        padding: 5px 20px !important;
-        background: #45475a !important;
-        border: 1px solid #89b4fa !important;
-    }
-
     h1, h2, h3, p { text-align: center !important; }
     .word-box { 
         font-size: 42px; text-align: center; font-weight: bold; 
@@ -119,14 +92,7 @@ if 'game_state' not in st.session_state:
     st.session_state.scores = {}
     st.session_state.current_player_idx = 0
     st.session_state.current_round = 1
-
-# Перевірка кліку по плитах (URL параметри) на самому початку
-params = st.query_params
-if "mode" in params:
-    st.session_state.game_mode = params["mode"]
-    st.session_state.game_state = "setup"
-    st.query_params.clear() 
-    st.rerun()
+    st.session_state.welcome_done = False
 
 # --- ЕКРАН 1: ДИСКЛЕЙМЕР ---
 if st.session_state.game_state == "welcome":
@@ -142,14 +108,24 @@ if st.session_state.game_state == "welcome":
     if st.button("ЛАДНО ✅"):
         st.session_state.game_state = "mode_select"
         st.rerun()
+    st.stop()
 
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
     
+    # Перевіряємо, чи був клік через URL-параметри
+    params = st.query_params
+    if "mode" in params:
+        st.session_state.game_mode = params["mode"]
+        st.session_state.game_state = "setup"
+        st.query_params.clear() # Очищуємо, щоб не зациклилось
+        st.rerun()
+
     col1, col2 = st.columns(2)
     
     with col1:
+        # Плита як посилання (клікабельна вся площа)
         st.markdown(f"""
             <a href="/?mode=irl" target="_self" style="text-decoration: none;">
                 <div class="mode-selection">
@@ -168,9 +144,12 @@ elif st.session_state.game_state == "mode_select":
                 </div>
             </a>
         """, unsafe_allow_html=True)
+    st.stop()
+
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
+    # КНОПКА НАЗАД
     if st.button("⬅️ НАЗАД"):
         st.session_state.game_state = "mode_select"
         st.rerun()
@@ -186,15 +165,16 @@ elif st.session_state.game_state == "setup":
             low_word = word.lower()
             existing_low = [w.lower() for w in st.session_state.all_words]
 
-            if word != "":
-                if low_word in existing_low:
-                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
-                else:
-                    st.session_state.all_words.append(word)
-                    st.session_state.last_added_word = word
-                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
-                    append_word_to_file(word)
-                st.rerun()
+            if word == "":
+                pass
+            elif low_word in existing_low:
+                st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+            else:
+                st.session_state.all_words.append(word)
+                st.session_state.last_added_word = word
+                st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                append_word_to_file(word)
+            st.rerun()
 
         if st.session_state.msg_data["text"]:
             if st.session_state.msg_data["type"] == "success":
@@ -236,6 +216,7 @@ elif st.session_state.game_state == "setup":
 
 # --- ЕКРАН 4: ОЧІКУВАННЯ (DISCORD) ---
 elif st.session_state.game_state == "waiting":
+    # КНОПКА НАЗАД
     if st.button("⬅️ НАЗАД"):
         st.session_state.game_state = "mode_select"
         st.rerun()
@@ -264,6 +245,7 @@ elif st.session_state.game_state == "waiting":
 
 # --- ЕКРАН 5: ГРА ---
 elif st.session_state.game_state == "playing":
+    # КНОПКА НАЗАД
     if st.button("⬅️ ПЕРЕРВАТИ ГРУ"):
         st.session_state.game_state = "mode_select"
         st.rerun()
@@ -309,6 +291,7 @@ elif st.session_state.game_state == "playing":
 
 # --- ЕКРАН 6: ФІНАЛ ---
 elif st.session_state.game_state == "finished":
+    # КНОПКА НАЗАД
     if st.button("⬅️ ДО ВИБОРУ РЕЖИМУ"):
         st.session_state.game_state = "mode_select"
         st.rerun()
