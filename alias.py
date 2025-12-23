@@ -351,9 +351,8 @@ if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
                     "duration": turn_duration
                 })
                 st.rerun()
-    else:
-        rem = int(data["t_end"] - time.time())
-        
+else:
+    rem = int(data["t_end"] - time.time())
         # Час вийшов
         if rem <= 0:
             st.warning("Час вийшов!")
