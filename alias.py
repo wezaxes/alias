@@ -35,7 +35,27 @@ st.markdown("""
         margin-top: 20px; text-transform: uppercase;
     }
     .mode-selection {
-        padding: 20px; border-radius: 15px; background: #585b70; border: 2px solid #89b4fa; margin-bottom: 20px;
+        padding: 30px; 
+        border-radius: 20px; 
+        /* Змінив фон на світліший сіро-блакитний */
+        background: #585b70; 
+        /* Змінив рамку на яскраву білу або світло-блакитну */
+        border: 3px solid #89b4fa; 
+        margin-bottom: 20px;
+        transition: 0.3s;
+    }
+    .mode-selection:hover {
+        /* Ефект підсвічування при наведенні */
+        background: #7f849c;
+        border-color: #fab387;
+        transform: scale(1.02);
+    }
+    .mode-selection h3 {
+        color: #f9e2af !important; /* Робимо заголовок золотистим */
+        margin-top: 0;
+    }
+    .mode-selection p {
+        color: #cdd6f4 !important; /* Світлий текст опису */
     }
     </style>
 """, unsafe_allow_html=True)
