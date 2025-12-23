@@ -335,18 +335,29 @@ elif st.session_state.game_state == "playing_sync":
             if len(players) < 2:
                 st.error("Треба мінімум 2 гравці!")
             else:
+                # ЛОГІКА РОТАЦІЇ (БЕЗПЕЧНА)
                 last_explainer = data.get("explainer", "")
+                
+                # Якщо гравців рівно 2
                 if len(players) == 2:
-                    p1 = [p for p in players if p != last_explainer][0]
-                    p2 = [p for p in players if p == last_explainer][0]
+                    # Перевіряємо, чи останній пояснювач все ще в кімнаті
+                    if last_explainer in players:
+                        p1 = [p for p in players if p != last_explainer][0]
+                        p2 = [p for p in players if p == last_explainer][0]
+                    else:
+                        # Якщо хтось вийшов/зайшов новий — просто рандом
+                        p1, p2 = random.sample(players, 2)
                 else:
+                    # Якщо більше двох гравців — завжди рандом
                     p1, p2 = random.sample(players, 2)
                 
                 ref.update({
-                    "explainer": p1, "listener": p2, 
+                    "explainer": p1, 
+                    "listener": p2, 
                     "word": random.choice(st.session_state.all_words), 
                     "t_end": time.time() + turn_duration,
-                    "total_rounds": total_rounds, "duration": turn_duration
+                    "total_rounds": total_rounds,
+                    "duration": turn_duration
                 })
                 st.rerun()
     else:
