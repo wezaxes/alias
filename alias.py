@@ -78,7 +78,14 @@ st.markdown("""
             
     div[data-testid="stVerticalBlock"] > div.stElementContainer {
         width: 100%;
-        margin-bottom:10px;
+css_style = """
+<style>
+    .your-class {
+        margin-bottom: 10px;
+    }
+</style>
+"""
+
     }
 
     div.stButton {
