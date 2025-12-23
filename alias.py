@@ -99,7 +99,7 @@ if not st.session_state.welcome_done:
 if not st.session_state.playing and not st.session_state.game_over:
     st.title("⚙️ Налаштування Alias")
     
-        with st.expander("➕ Додати своє дебільне слово"):
+    with st.expander("➕ Додати своє дебільне слово"):
         st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і які можна пояснити!")
         
         if 'msg' not in st.session_state: st.session_state.msg = None
