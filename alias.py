@@ -279,37 +279,77 @@ elif st.session_state.game_state == "sync_lobby":
 # --- ГРА (DISCORD SYNC) ---
 elif st.session_state.game_state == "playing_sync":
     ref = db.collection("rooms").document(st.session_state.room_id)
-    data = ref.get().to_dict()
+    doc = ref.get()
+    if not doc.exists:
+        st.error("Кімнату втрачено!")
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+    
+    data = doc.to_dict()
     my_name = st.session_state.my_name
 
-    if not data["explainer"]:
+    # 1. ПЕРЕВІРКА НА ЗАКІНЧЕННЯ ГРИ
+    # Використовуємо ліміт раундів з налаштувань
+    if data.get("current_round", 1) > st.session_state.total_rounds:
+        st.session_state.scores = data["scores"]
+        st.session_state.game_state = "finished"
+        st.rerun()
+
+    if not data.get("explainer"):
+        st.title(f"Раунд {data.get('current_round', 1)} з {st.session_state.total_rounds}")
         if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
             p1, p2 = random.sample(data["players"], 2)
-            ref.update({"explainer": p1, "listener": p2, "word": random.choice(st.session_state.all_words), "t_end": time.time() + 60})
+            ref.update({
+                "explainer": p1, 
+                "listener": p2, 
+                "word": random.choice(st.session_state.all_words), 
+                "t_end": time.time() + st.session_state.duration
+            })
             st.rerun()
     else:
         rem = int(data["t_end"] - time.time())
         if rem <= 0:
             st.warning("Час вийшов!")
             if st.button("Наступний раунд"):
-                ref.update({"explainer": "", "listener": "", "word": ""})
+                # Збільшуємо номер раунду в базі
+                new_round = data.get("current_round", 1) + 1
+                ref.update({
+                    "explainer": "", 
+                    "listener": "", 
+                    "word": "", 
+                    "current_round": new_round
+                })
                 st.rerun()
         else:
             st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+            
             if my_name == data["explainer"]:
                 st.success("ТИ ПОЯСНЮЄШ!")
                 st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
-                if st.button("✅ ВГАДАНО"):
+                
+                # ДОДАЄМО КНОПКИ В ДВІ КОЛОНКИ
+                col1, col2 = st.columns(2)
+                if col1.button("✅ ВГАДАНО"):
                     data["scores"][my_name] += 1
-                    ref.update({"scores": data["scores"], "word": random.choice(st.session_state.all_words)})
+                    ref.update({
+                        "scores": data["scores"], 
+                        "word": random.choice(st.session_state.all_words)
+                    })
                     st.rerun()
+                if col2.button("❌ СКІП"):
+                    ref.update({
+                        "word": random.choice(st.session_state.all_words)
+                    })
+                    st.rerun()
+                    
             elif my_name == data["listener"]:
                 st.warning("ТИ ВІДГАДУЄШ!")
                 st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
             else:
-                st.info("Глядач")
-        time.sleep(1); st.rerun()
-
+                st.info("Ви глядач")
+        
+        time.sleep(1)
+        st.rerun()
 # --- СТАРИЙ IRL РЕЖИМ (ВИПРАВЛЕНИЙ) ---
 elif st.session_state.game_state == "playing_irl":
     # Перевірка на кінець гри перед початком ходу
