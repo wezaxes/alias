@@ -17,6 +17,18 @@ st.markdown("""
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
+    /* ШМАТОК ДЛЯ ВСТАВКИ В <style> */
+    div[data-testid="stButton"] >
+    button:has(div:contains("⬅️")) {
+    width: auto !important;
+        min-width: 120px !important;
+        height: 2.2em !important;
+        font-size: 14px !important;
+        padding: 0px 15px !important;
+        background: #45475a !important;
+        border: 1px solid #89b4fa !important;
+        margin-left: 0 !important;
+    }
 
     /* ВУЗЬКА ТА МАЛЕНЬКА КНОПКА НАЗАД */
     div[data-testid="stButton"] > button:has(div:contains("⬅️")) {
