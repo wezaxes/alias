@@ -233,8 +233,8 @@ elif st.session_state.game_state == "setup":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
     else:
-        st.write("Введи імена гравців (через кому):")
-        names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
+        st.write("Введи ніки гравців (через кому):")
+        names_raw = st.text_area("Ніки:", " ")
         names = [n.strip() for n in names_raw.replace('\n', ',').split(',') if n.strip()]
                
     rounds = st.number_input("Кількість раундів", 1, 20, 3)
@@ -362,7 +362,11 @@ elif st.session_state.game_state == "playing_sync":
             if my_name == data["explainer"]:
                 st.success("ТИ ПОЯСНЮЄШ!")
                 st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
+                # Визначаємо складність по довжині слова
+                word_to_show = data["word"].upper()
+                diff_emoji = "🔴" if len(word_to_show) > 8 else "🟢"
                 
+                st.markdown(f'<div class="word-box">{diff_emoji} {word_to_show}</div>', unsafe_allow_html=True)
                 col1, col2 = st.columns(2)
                 if col1.button("✅ ВГАДАНО"):
                     data["scores"][my_name] = data["scores"].get(my_name, 0) + 1
@@ -409,7 +413,16 @@ elif st.session_state.game_state == "playing_irl":
     
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
         st.title(f"Раунд {st.session_state.current_round} з {st.session_state.total_rounds}")
-        st.subheader(f"Черга: {active}")
+        st.subheader(f"Черга команди: {active}")
+        
+        # --- ФРАЗА ПЕРЕД СТАРТОМ ---
+        tips = [
+            "Готуйся, зараз буде щось крінжове... 🤡",
+            "Дивись у вічі тіммейту, там відповідь! 👀",
+            "Зроби глибокий вдих, час піде швидко! 💨"
+        ]
+        st.warning(random.choice(tips))
+        
         if st.button("Я ГОТОВИЙ! ▶️"):
             st.session_state.turn_active = True
             st.session_state.start_time = time.time()
@@ -433,7 +446,11 @@ elif st.session_state.game_state == "playing_irl":
 
         st.subheader(f"⏱ {rem} сек | {active}: {st.session_state.scores[active]} ⭐")
         st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
+        # Визначаємо складність
+        word_to_show = st.session_state.current_word.upper()
+        diff_emoji = "🔴" if len(word_to_show) > 8 else "🟢"
         
+        st.markdown(f'<div class="word-box">{diff_emoji} {word_to_show}</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         if c1.button("✅ ВГАДАНО"):
             st.session_state.scores[active] += 1
