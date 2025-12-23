@@ -35,7 +35,7 @@ st.markdown("""
         margin-top: 20px; text-transform: uppercase;
     }
     .mode-selection {
-        padding: 20px; border-radius: 15px; background: #45475a; border: 2px solid #89b4fa; margin-bottom: 20px;
+        padding: 20px; border-radius: 15px; background: #585b70; border: 2px solid #89b4fa; margin-bottom: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
