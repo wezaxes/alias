@@ -326,11 +326,22 @@ elif st.session_state.game_state == "playing_sync":
         ]
         st.info(random.choice(quotes)) 
         
-        if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
-            if len(data["players"]) < 2:
+if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
+            players = data["players"]
+            if len(players) < 2:
                 st.error("Треба мінімум 2 гравці!")
             else:
-                p1, p2 = random.sample(data["players"], 2)
+                # ЛОГІКА РОТАЦІЇ
+                last_explainer = data.get("explainer", "")
+                
+                if len(players) == 2:
+                    # Якщо двоє, просто беремо того, хто НЕ пояснював минулого разу
+                    p1 = [p for p in players if p != last_explainer][0]
+                    p2 = [p for p in players if p == last_explainer][0]
+                else:
+                    # Якщо більше двох, залишаємо рандом
+                    p1, p2 = random.sample(players, 2)
+                
                 ref.update({
                     "explainer": p1, 
                     "listener": p2, 
