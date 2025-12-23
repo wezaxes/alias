@@ -9,41 +9,24 @@ st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="�
 # Стилізація інтерфейсу
 st.markdown("""
     <style>
-    /* Центрування кнопок */
     .stButton { display: flex; justify-content: center; }
     .stButton>button { 
-        width: 100%; 
-        max-width: 500px;
-        height: 4.5em; 
-        font-size: 24px !important; 
-        font-weight: bold; 
-        border-radius: 15px; 
-        transition: 0.3s; 
-        margin-bottom: 10px;
-        text-transform: uppercase;
+        width: 100%; max-width: 500px; height: 4.5em; 
+        font-size: 24px !important; font-weight: bold; 
+        border-radius: 15px; transition: 0.3s; 
+        margin-bottom: 10px; text-transform: uppercase;
     }
     .stButton>button:hover { transform: scale(1.02); }
     h1, h2, h3, p { text-align: center !important; }
-    
     .word-box { 
-        font-size: 42px; 
-        text-align: center; 
-        font-weight: bold; 
-        color: #f9e2af; 
-        background-color: #313244; 
-        padding: 50px; 
-        border-radius: 20px; 
-        border: 3px solid #89b4fa; 
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3); 
-        margin: 20px 0; 
+        font-size: 42px; text-align: center; font-weight: bold; 
+        color: #f9e2af; background-color: #313244; padding: 50px; 
+        border-radius: 20px; border: 3px solid #89b4fa; 
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3); margin: 20px 0; 
     }
-    
     .disclaimer-box {
-        text-align: center;
-        background-color: #45475a;
-        padding: 25px;
-        border-radius: 15px;
-        border: 2px solid #f38ba8;
+        text-align: center; background-color: #45475a; 
+        padding: 25px; border-radius: 15px; border: 2px solid #f38ba8;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -54,8 +37,7 @@ def load_words_from_file():
     default_words = ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт"]
     if not os.path.exists(filename):
         with open(filename, "w", encoding="utf-8") as f:
-            for w in default_words:
-                f.write(w + "\n")
+            for w in default_words: f.write(w + "\n")
         return default_words
     with open(filename, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
@@ -64,9 +46,16 @@ def append_word_to_file(word):
     with open("words.txt", "a", encoding="utf-8") as f:
         f.write(word + "\n")
 
-# Ініціалізація станів
-if 'init_done' not in st.session_state:
+# --- ІНІЦІАЛІЗАЦІЯ СТАНІВ ---
+if 'all_words' not in st.session_state:
     st.session_state.all_words = load_words_from_file()
+
+# Окремі стани для повідомлень, щоб вони не зникали
+if 'msg' not in st.session_state: st.session_state.msg = None
+if 'msg_type' not in st.session_state: st.session_state.msg_type = None
+if 'last_added_word' not in st.session_state: st.session_state.last_added_word = ""
+
+if 'init_done' not in st.session_state:
     st.session_state.teams = {}
     st.session_state.team_names = []
     st.session_state.current_team_idx = 0
@@ -74,7 +63,6 @@ if 'init_done' not in st.session_state:
     st.session_state.playing = False
     st.session_state.game_over = False
     st.session_state.welcome_done = False
-    st.session_state.last_added_word = ""
     st.session_state.init_done = True
 
 # --- 1. ЕКРАН ДИСКЛЕЙМЕРА ---
@@ -89,7 +77,6 @@ if not st.session_state.welcome_done:
             </p>
         </div>
     """, unsafe_allow_html=True)
-    st.write("")
     if st.button("ЛАДНО ✅"):
         st.session_state.welcome_done = True
         st.rerun()
@@ -100,12 +87,8 @@ if not st.session_state.playing and not st.session_state.game_over:
     st.title("⚙️ Налаштування Alias")
     
     with st.expander("➕ Додати своє дебільне слово"):
-        st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і які можна пояснити!")
+        st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і можна пояснити!")
         
-        if 'msg' not in st.session_state: st.session_state.msg = None
-        if 'msg_type' not in st.session_state: st.session_state.msg_type = None
-        if 'last_added_word' not in st.session_state: st.session_state.last_added_word = ""
-
         example_word = random.choice(st.session_state.all_words) if st.session_state.all_words else "Слово"
         new_word_raw = st.text_input("Введи слово:", placeholder=f"Наприклад: {example_word}")
 
@@ -114,7 +97,7 @@ if not st.session_state.playing and not st.session_state.game_over:
             compare_word = new_word_raw.strip().lower()
             existing_words_clean = [w.strip().lower() for w in st.session_state.all_words]
 
-            if clean_word: # Працюємо тільки якщо в полі щось вписано
+            if clean_word:
                 if compare_word in existing_words_clean:
                     st.session_state.msg = "Таке слово вже є, давай придумаємо щось прикольніше"
                     st.session_state.msg_type = "error"
@@ -126,17 +109,17 @@ if not st.session_state.playing and not st.session_state.game_over:
                     st.session_state.msg_type = "success"
                 st.rerun()
 
+        # Виводимо повідомлення, якщо воно є в пам'яті
         if st.session_state.msg:
             if st.session_state.msg_type == "success":
                 st.success(st.session_state.msg)
             elif st.session_state.msg_type == "error":
                 st.error(st.session_state.msg)
-            st.session_state.msg = None 
-            st.session_state.msg_type = None
+            # Очищаємо тільки текст повідомлення, щоб воно не висіло після переходу на іншу вкладку
+            # Але для тесту залишимо його, поки не натиснуть іншу кнопку
 
         if st.session_state.last_added_word:
             st.markdown(f"**Останнє додане слово:** `{st.session_state.last_added_word}`")
-
 
     st.divider()
     
@@ -152,6 +135,8 @@ if not st.session_state.playing and not st.session_state.game_over:
     st.session_state.duration = st.slider("Час на хід (сек)", 10, 120, 60)
 
     if st.button("🔥 ПОЧАТИ ГРУ"):
+        # Перед початком гри чистимо повідомлення
+        st.session_state.msg = None
         st.session_state.team_names = temp_names
         st.session_state.teams = {name: 0 for name in temp_names}
         st.session_state.game_words = st.session_state.all_words.copy()
@@ -190,7 +175,6 @@ elif st.session_state.playing:
         else:
             st.progress(max(0.0, min(time_left / st.session_state.duration, 1.0)))
             st.write(f"### ⏱ {time_left} сек | {current_team}: {st.session_state.teams[current_team]} ⭐")
-            
             st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
             
             if st.button("✅ ВГАДАНО"):
@@ -210,12 +194,11 @@ elif st.session_state.playing:
 elif st.session_state.game_over:
     st.title("🏆 ФІНАЛЬНИЙ РАХУНОК")
     sorted_scores = sorted(st.session_state.teams.items(), key=lambda x: x[1], reverse=True)
-    
     for i, (name, score) in enumerate(sorted_scores):
         st.write(f"### {i+1}. {name}: {score} балів")
     
     if st.button("ЗІГРАТИ ЩЕ РАЗ 🔄"):
-        words_backup = load_words_from_file() # Підтягуємо нові слова з файлу
+        words_backup = load_words_from_file()
         st.session_state.clear()
         st.session_state.all_words = words_backup
         st.session_state.init_done = True
