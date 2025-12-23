@@ -6,35 +6,16 @@ import os
 # 1. Налаштування сторінки
 st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="🎮", layout="centered")
 
-# 2. Стилізація (ОНОВЛЕНО)
+# 2. Стилізація
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
-    
-    /* ПЕРЕТВОРЮЄМО ВСІ КНОПКИ НА КРАСИВІ ПЛИТИ */
     .stButton>button { 
-        width: 100%; 
-        max-width: 500px; 
-        min-height: 4.5em; 
-        font-size: 24px !important; 
-        font-weight: bold; 
-        border-radius: 20px; 
-        margin-bottom: 10px; 
-        text-transform: uppercase;
-        background: #585b70 !important;
-        border: 3px solid #89b4fa !important;
-        color: #f9e2af !important;
-        transition: 0.3s !important;
+        width: 100%; max-width: 500px; height: 4.5em; 
+        font-size: 24px !important; font-weight: bold; 
+        border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
-    
-    .stButton>button:hover {
-        background: #7f849c !important;
-        border-color: #fab387 !important;
-        transform: scale(1.02);
-    }
-
     h1, h2, h3, p { text-align: center !important; }
-    
     .word-box { 
         font-size: 42px; text-align: center; font-weight: bold; 
         color: #f9e2af; background-color: #313244; padding: 50px; 
@@ -54,17 +35,29 @@ st.markdown("""
         margin-top: 20px; text-transform: uppercase;
     }
     
-    /* Дизайн плит для вибору режиму (залишаємо як було) */
+    /* Твій дизайн плит */
     .mode-selection {
-        padding: 30px; border-radius: 20px; background: #585b70; 
-        border: 3px solid #89b4fa; margin-bottom: 20px; transition: 0.3s;
-        cursor: pointer; display: block; width: 100%; text-decoration: none !important;
+        padding: 30px; 
+        border-radius: 20px; 
+        background: #585b70; 
+        border: 3px solid #89b4fa; 
+        margin-bottom: 20px;
+        transition: 0.3s;
+        cursor: pointer;
+        display: block;
+        width: 100%;
+        text-decoration: none !important;
     }
-    .mode-selection:hover { background: #7f849c; border-color: #fab387; transform: scale(1.02); }
+    .mode-selection:hover {
+        background: #7f849c;
+        border-color: #fab387;
+        transform: scale(1.02);
+    }
     .mode-selection h3 { color: #f9e2af !important; margin-top: 0; }
     .mode-selection p { color: #cdd6f4 !important; }
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- 3. РОБОТА З ФАЙЛОМ ---
 def load_words():
@@ -79,11 +72,19 @@ def append_word_to_file(word):
     try:
         with open("words.txt", "a", encoding="utf-8") as f:
             f.write(word + "\n")
-    except: pass
+    except:
+        pass
 
 # Ініціалізація станів
-if 'all_words' not in st.session_state: st.session_state.all_words = load_words()
-if 'msg_data' not in st.session_state: st.session_state.msg_data = {"text": None, "type": None}
+if 'all_words' not in st.session_state:
+    st.session_state.all_words = load_words()
+
+if 'msg_data' not in st.session_state:
+    st.session_state.msg_data = {"text": None, "type": None}
+
+if 'last_added_word' not in st.session_state:
+    st.session_state.last_added_word = ""
+
 if 'game_state' not in st.session_state:
     st.session_state.game_state = "welcome"
     st.session_state.game_mode = None
@@ -91,12 +92,19 @@ if 'game_state' not in st.session_state:
     st.session_state.scores = {}
     st.session_state.current_player_idx = 0
     st.session_state.current_round = 1
+    st.session_state.welcome_done = False
 
 # --- ЕКРАН 1: ДИСКЛЕЙМЕР ---
 if st.session_state.game_state == "welcome":
     st.markdown("<h2 style='color: #fab387;'>ДИСКЛЕЙМЕР</h2>", unsafe_allow_html=True)
-    st.markdown("""<div class="disclaimer-box"><h2 style='color: #f38ba8; margin-top: 0;'>УВАГА КОД ПИСАЛА ЖІНКА‼️</h2>
-    <p style='font-size: 18px; color: #cdd6f4;'>Це <b>СУПЕР пробна версія</b>.</p></div>""", unsafe_allow_html=True)
+    st.markdown("""
+        <div class="disclaimer-box">
+            <h2 style='color: #f38ba8; margin-top: 0;'>УВАГА КОД ПИСАЛА ЖІНКА‼️</h2>
+            <p style='font-size: 18px; color: #cdd6f4;'>
+                Це <b>СУПЕР пробна версія</b>. Шанс отримати дибільне слово <b>70%</b>.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
     if st.button("ЛАДНО ✅"):
         st.session_state.game_state = "mode_select"
         st.rerun()
@@ -105,22 +113,44 @@ if st.session_state.game_state == "welcome":
 # --- ЕКРАН 2: ВИБІР РЕЖИМУ ---
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
+    
+    # Перевіряємо, чи був клік через URL-параметри
     params = st.query_params
     if "mode" in params:
         st.session_state.game_mode = params["mode"]
         st.session_state.game_state = "setup"
-        st.query_params.clear()
+        st.query_params.
+        clear() # Очищуємо, щоб не зациклилось
         st.rerun()
 
     col1, col2 = st.columns(2)
+    
     with col1:
-        st.markdown('<a href="/?mode=irl" target="_self" style="text-decoration: none;"><div class="mode-selection"><h3>🏠 IRL</h3><p>Вживу</p></div></a>', unsafe_allow_html=True)
+        # Плита як посилання (клікабельна вся площа)
+        st.markdown(f"""
+            <a href="/?mode=irl" target="_self" style="text-decoration: none;">
+                <div class="mode-selection">
+                    <h3>🏠 IRL</h3>
+                    <p>Командна гра вживу</p>
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+            
     with col2:
-        st.markdown('<a href="/?mode=discord" target="_self" style="text-decoration: none;"><div class="mode-selection"><h3>🎙️ DISCORD</h3><p>Через демку</p></div></a>', unsafe_allow_html=True)
+        st.markdown(f"""
+            <a href="/?mode=discord" target="_self" style="text-decoration: none;">
+                <div class="mode-selection">
+                    <h3>🎙️ DISCORD</h3>
+                    <p>Кругова гра через демку</p>
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
     st.stop()
+
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
 elif st.session_state.game_state == "setup":
+    # КНОПКА НАЗАД
     if st.button("⬅️ НАЗАД"):
         st.session_state.game_state = "mode_select"
         st.rerun()
@@ -129,7 +159,6 @@ elif st.session_state.game_state == "setup":
     
     with st.expander("➕ Додати своє дебільне слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
-        
         new_word_raw = st.text_input("Введи слово:", key="input_field")
 
         if st.button("ДОДАТИ В СЛОВНИК"):
@@ -145,12 +174,7 @@ elif st.session_state.game_state == "setup":
                 st.session_state.all_words.append(word)
                 st.session_state.last_added_word = word
                 st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
-                # Спроба зберегти у файл (працює локально, на сервері тимчасово)
-                try:
-                    with open("words.txt", "a", encoding="utf-8") as f:
-                        f.write(word + "\n")
-                except:
-                    pass
+                append_word_to_file(word)
             st.rerun()
 
         if st.session_state.msg_data["text"]:
@@ -163,48 +187,76 @@ elif st.session_state.game_state == "setup":
             st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
 
     st.divider()
-
+    
     g_mode = st.session_state.game_mode
     if g_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
     else:
-        names_raw = st.text_area("Імена гравців:", "Катя, Петя, Маша, Саша")
+        st.write("Введи імена гравців (через кому):")
+        names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
         names = [n.strip() for n in names_raw.replace('\n', ',').split(',') if n.strip()]
 
     rounds = st.number_input("Кількість раундів", 1, 20, 3)
     timer = st.slider("Секунди на хід", 10, 120, 60)
 
     if st.button("🔥 ПОЧАТИ ГРУ"):
-        if len(names) >= 2:
-            st.session_state.players, st.session_state.scores = names, {n: 0 for n in names}
-            st.session_state.total_rounds, st.session_state.duration = rounds, timer
+        if len(names) < 2:
+            st.error("Для гри треба хоча б двоє!")
+        else:
+            st.session_state.players = names
+            st.session_state.scores = {n: 0 for n in names}
+            st.session_state.total_rounds = rounds
+            st.session_state.duration = timer
             st.session_state.game_words = st.session_state.all_words.copy()
             random.shuffle(st.session_state.game_words)
-            st.session_state.current_player_idx, st.session_state.current_round = 0, 1
+            st.session_state.current_player_idx = 0
+            st.session_state.current_round = 1
             st.session_state.game_state = "waiting" if g_mode == "discord" else "playing"
             st.rerun()
 
-# --- ЕКРАН 4: ОЧІКУВАННЯ ---
+# --- ЕКРАН 4: ОЧІКУВАННЯ (DISCORD) ---
 elif st.session_state.game_state == "waiting":
+    # КНОПКА НАЗАД
     if st.button("⬅️ НАЗАД"):
-        st.session_state.game_state = "mode_select"; st.rerun()
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     idx = st.session_state.current_player_idx
-    st.markdown(f'<div class="waiting-screen"><h1>🤫 ТССС!</h1><h2>🎙️ Пояснює: {st.session_state.players[idx]}</h2></div>', unsafe_allow_html=True)
-    if st.button("ПОЧАТИ РАУНД ▶️"):
-        st.session_state.turn_active, st.session_state.start_time = True, time.time()
+    explainer = st.session_state.players[idx]
+    listener = st.session_state.players[(idx + 1) % len(st.session_state.players)]
+    
+    st.markdown(f"""<div class="waiting-screen">
+            <h1 style="margin-bottom:0;">🤫 ТССС, ГОТУЄМОСЬ!</h1>
+            <p style="font-size:18px;">Коло {st.session_state.current_round} з {st.session_state.total_rounds}</p>
+            <hr style="border: 1px solid #45475a;">
+            <h2 style="color: #a6e3a1; margin-bottom:5px;">🎙️ Пояснює: {explainer}</h2>
+            <h2 style="color: #89b4fa;">👂 Відгадує: {listener}</h2>
+            <div class="warning-text">🙈 {listener.upper()}, ВИЙДИ ЗІ СТРІМУ!</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("ВІДГАДУВАЧ ПІШОВ — ПОЧИНАЄМО! ▶️"):
+        st.session_state.turn_active = True
+        st.session_state.start_time = time.time()
         st.session_state.current_word = st.session_state.game_words.pop(0) if st.session_state.game_words else "КІНЕЦЬ"
-        st.session_state.game_state = "playing"; st.rerun()
+        st.session_state.game_state = "playing"
+        st.rerun()
 
 # --- ЕКРАН 5: ГРА ---
 elif st.session_state.game_state == "playing":
-    if st.button("⬅️ ПЕРЕРВАТИ"):
-        st.session_state.game_state = "mode_select"; st.rerun()
-    
+    # КНОПКА НАЗАД
+    if st.button("⬅️ ПЕРЕрвати ГРУ"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
     active_name = st.session_state.players[st.session_state.current_player_idx]
+
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
-        if st.button(f"Я ГОТОВИЙ(-А) {active_name}! ▶️"):
-            st.session_state.turn_active, st.session_state.start_time = True, time.time()
+        st.title(f"Черга: {active_name}")
+        if st.button("Я ГОТОВИЙ(-А)! ▶️"):
+            st.session_state.turn_active = True
+            st.session_state.start_time = time.time()
             st.session_state.current_word = st.session_state.game_words.pop(0) if st.session_state.game_words else "КІНЕЦЬ"
             st.rerun()
     else:
@@ -213,12 +265,18 @@ elif st.session_state.game_state == "playing":
             st.session_state.turn_active = False
             st.session_state.current_player_idx += 1
             if st.session_state.current_player_idx >= len(st.session_state.players):
-                st.session_state.current_player_idx = 0; st.session_state.current_round += 1
-            st.session_state.game_state = "finished" if st.session_state.current_round > st.session_state.total_rounds else "waiting"
+                st.session_state.current_player_idx = 0
+                st.session_state.current_round += 1
+            
+            if st.session_state.current_round > st.session_state.total_rounds:
+                st.session_state.game_state = "finished"
+            else:
+                st.session_state.game_state = "waiting" if st.session_state.game_mode == "discord" else "playing"
             st.rerun()
         
-        st.markdown(f"### ⏱ {rem} сек")
+        st.subheader(f"⏱ {rem} сек | {active_name}: {st.session_state.scores[active_name]} ⭐")
         st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
+        
         c1, c2 = st.columns(2)
         if c1.button("✅ ВГАДАНО"):
             st.session_state.scores[active_name] += 1
@@ -228,11 +286,21 @@ elif st.session_state.game_state == "playing":
             st.session_state.scores[active_name] -= 1
             st.session_state.current_word = st.session_state.game_words.pop(0) if st.session_state.game_words else "КІНЕЦЬ"
             st.rerun()
-        time.sleep(0.1); st.rerun()
+        time.sleep(0.1)
+        st.rerun()
 
 # --- ЕКРАН 6: ФІНАЛ ---
 elif st.session_state.game_state == "finished":
-    st.title("🏆 РЕЗУЛЬТАТИ")
-    for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True): st.write(f"### {n}: {s}")
+    # КНОПКА НАЗАД
+    if st.button("⬅️ ДО ВИБОРУ РЕЖИМУ"):
+        st.session_state.game_state = "mode_select"
+        st.rerun()
+
+    st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
+    for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
+        st.write(f"### {n}: {s} балів")
     if st.button("В МЕНЮ 🔄"):
-        st.session_state.game_state = "mode_select"; st.rerun()
+        st.session_state.game_state = "mode_select"
+        st.session_state.current_player_idx = 0
+        st.session_state.current_round = 1
+        st.rerun()
