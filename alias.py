@@ -43,18 +43,13 @@ st.markdown("""
 # --- 3. РОБОТА З ФАЙЛОМ ---
 def load_words():
     filename = "words.txt"
+    # Якщо файл існує, читаємо його
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             words = [line.strip() for line in f if line.strip()]
             if words: return words
+    # Якщо файлу немає або він порожній - базовий набір
     return ["Пудж", "Бебра", "Стан", "Мід", "Рошан", "Сленг", "Крінж", "Абобус", "Wezaxes", "Тілт"]
-
-def append_word_to_file(word):
-    try:
-        with open("words.txt", "a", encoding="utf-8") as f:
-            f.write(word + "\n")
-    except:
-        pass
 
 # Ініціалізація станів
 if 'all_words' not in st.session_state:
@@ -63,12 +58,14 @@ if 'all_words' not in st.session_state:
 if 'msg_data' not in st.session_state:
     st.session_state.msg_data = {"text": None, "type": None}
 
+if 'last_added_word' not in st.session_state:
+    st.session_state.last_added_word = ""
+
 if 'game_state' not in st.session_state:
-    st.session_state.game_state = "welcome"
-    st.session_state.game_mode = None 
-    st.session_state.players = []
-    st.session_state.scores = {}
-    st.session_state.current_player_idx = 0
+    st.session_state.game_state = "setup"
+    st.session_state.teams = {}
+    st.session_state.team_names = []
+    st.session_state.current_team_idx = 0
     st.session_state.current_round = 1
     st.session_state.welcome_done = False
 
@@ -107,18 +104,43 @@ elif st.session_state.game_state == "mode_select":
     st.stop()
 
 # --- ЕКРАН 3: НАЛАШТУВАННЯ ---
-elif st.session_state.game_state == "setup":
-    st.title(f"⚙️ Налаштування ({st.session_state.game_mode.upper()})")
+if st.session_state.game_state == "setup":
+    st.title("⚙️ Налаштування Alias")
     
     with st.expander("➕ Додати своє дебільне слово"):
+        st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
+        
         new_word_raw = st.text_input("Введи слово:", key="input_field")
-        if st.button("ДОДАТИ"):
+
+        if st.button("ДОДАТИ В СЛОВНИК"):
             word = new_word_raw.strip().capitalize()
-            if word and word.lower() not in [w.lower() for w in st.session_state.all_words]:
+            low_word = word.lower()
+            existing_low = [w.lower() for w in st.session_state.all_words]
+
+            if word == "":
+                pass
+            elif low_word in existing_low:
+                st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+            else:
                 st.session_state.all_words.append(word)
-                append_word_to_file(word)
-                st.session_state.msg_data = {"text": "Слово в базі! ✅", "type": "success"}
-                st.rerun()
+                st.session_state.last_added_word = word
+                st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                # Спроба зберегти у файл (працює локально, на сервері тимчасово)
+                try:
+                    with open("words.txt", "a", encoding="utf-8") as f:
+                        f.write(word + "\n")
+                except:
+                    pass
+            st.rerun()
+
+        if st.session_state.msg_data["text"]:
+            if st.session_state.msg_data["type"] == "success":
+                st.success(st.session_state.msg_data["text"])
+            else:
+                st.error(st.session_state.msg_data["text"])
+        
+        if st.session_state.last_added_word:
+            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
 
     st.divider()
     
