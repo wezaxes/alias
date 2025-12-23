@@ -38,7 +38,7 @@ st.markdown("""
         margin-top: 20px; text-transform: uppercase;
     }
     
-    /* Твій дизайн плит */
+    /* Дизайн плит */
     .mode-selection {
         padding: 30px; 
         border-radius: 20px; 
@@ -58,12 +58,19 @@ st.markdown("""
     }
     .mode-selection h3 { color: #f9e2af !important; margin-top: 0; }
     .mode-selection p { color: #cdd6f4 !important; }
+
+    /* Стиль для кнопки фідбеку */
+    .feedback-btn {
+        background-color: #38bdf8 !important;
+        border: none !important;
+        color: white !important;
+    }
     </style>
 """, unsafe_allow_html=True)
+
 # Отдельный код по кнпки
 st.markdown("""
     <style>
-            
     div[data-testid="stVerticalBlock"] > div.stElementContainer {
         width: 100%;
         margin-bottom: 10px;
@@ -80,6 +87,7 @@ st.markdown("""
     }     
     </style>
 """, unsafe_allow_html=True)
+
 # --- 3. БАЗА ДАНИХ ТА ФАЙЛИ ---
 @st.cache_resource
 def get_db():
@@ -123,6 +131,14 @@ if 'game_state' not in st.session_state:
     st.session_state.scores = {}
     st.session_state.current_player_idx = 0
     st.session_state.current_round = 1
+
+# Кнопка "Запропонувати ідею" в сайдбарі (буде всюди, де є сайдбар)
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("### 💡 Маєш ідею або щось зламалось?")
+    st.link_button("ЗАПРОПОНУВАТИ ФІЧУ/НАЯБІДНІЧАТЬ ✈️", "https://t.me/wezaxes", use_container_width=True)
+    st.markdown("---")
+
 # Перевірка параметрів URL
 params = st.query_params
 if "mode" in params:
@@ -144,6 +160,36 @@ if st.session_state.game_state == "welcome":
         </div>
     """, unsafe_allow_html=True)
     if st.button("ЛАДНО ✅"):
+        st.session_state.game_state = "tutorial"
+        st.rerun()
+
+elif st.session_state.game_state == "tutorial":
+    st.title("📖 Куди жмать? (методичка)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        ### 🏠 Режим IRL
+        **Для тих, хто в одній кімнаті:**
+        * Один телефон на всіх.
+        * Передаєте мобілу тому, чия черга.
+        * Тиснете **"Я готовий"** і вперед!
+        """)
+    with col2:
+        st.markdown("""
+        ### 🎙️ DISCORD
+        **Для гри на відстані:**
+        * Кожен заходить зі свого девайсу.
+        * Один створює кімнату (Начальнік), інші вводять код.
+        * Система сама каже, хто пояснює.
+        """)
+    
+    st.info("💡 **Головне правило:** Пояснюй як хочеш, але не називай саме слово або спільнокореневі.")
+    st.markdown("---")
+    st.write("✅ **Вгадано** — бал команді. | ❌ **Скіп** — нове слово.")
+    st.write("➕ У налаштуваннях можна додати свої слова! (ми ще не знаємо як вони зберігаються, але обов'язково розберемося з цим колись)")
+    
+    if st.button("ЗРОЗУМІВ, ПОГНАЛИ! 🚀"):
         st.session_state.game_state = "mode_select"
         st.rerun()
 
@@ -180,7 +226,7 @@ elif st.session_state.game_state == "setup":
     st.title("⚙️ Налаштування")
     
     # --- ДОДАВАННЯ СЛІВ ---
-    with st.expander("➕ Додати своє дебільне слово"):
+    with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         new_word_raw = st.text_input("Введи слово:", key="input_field")
 
@@ -191,11 +237,11 @@ elif st.session_state.game_state == "setup":
 
             if word != "":
                 if low_word in existing_low:
-                    st.session_state.msg_data = {"text": "Таке слово вже є!", "type": "error"}
+                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
                 else:
                     st.session_state.all_words.append(word)
                     st.session_state.last_added_word = word
-                    st.session_state.msg_data = {"text": "Додано успішно!", "type": "success"}
+                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
                     append_word_to_file(word)
                 st.rerun()
 
@@ -225,7 +271,6 @@ elif st.session_state.game_state == "setup":
                     ref = db.collection("rooms").document(room_id)
                     doc = ref.get()
                     
-                    # Якщо кімнати немає або завершена — створюємо (ЯК ХОСТ)
                     if not doc.exists or doc.to_dict().get("state") == "finished":
                         ref.set({
                             "host": my_name,
@@ -238,7 +283,6 @@ elif st.session_state.game_state == "setup":
                             "explainer": "", "listener": "", "word": ""
                         })
                     else:
-                        # Заходимо як звичайний гравець
                         data = doc.to_dict()
                         if my_name not in data["players"]:
                             data["players"].append(my_name)
@@ -248,7 +292,7 @@ elif st.session_state.game_state == "setup":
                     st.session_state.game_state = "sync_lobby"
                     st.rerun()
 
-    # --- ЛОГІКА IRL (залишаємо як було) ---
+    # --- ЛОГІКА IRL ---
     elif st.session_state.game_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
@@ -280,37 +324,31 @@ elif st.session_state.game_state == "sync_lobby":
         
     data = doc.to_dict()
     
-    # Якщо гра вже запущена хостом — перекидаємо всіх у гру
     if data.get("state") == "playing":
         st.session_state.game_state = "playing_sync"
         st.rerun()
 
     st.write("### Гравці в лобі:")
-    # Малюємо список гравців кнопками (просто для краси)
     cols = st.columns(3)
     for i, p in enumerate(data["players"]):
         cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_{i}")
     
     st.divider()
     
-    # ПЕРЕВІРКА НА ХОСТА
     is_host = (data.get("host") == st.session_state.my_name)
     
     if is_host:
         st.subheader("👑 Ви Хост (Адмін)")
-        st.write("Тільки ви бачите ці налаштування:")
+        st.write("Тільки ви бачите ці налаштування, розбирайтеся:")
         
-        # 1. Хост обирає параметри
         h_rounds = st.number_input("Кількість раундів", 1, 20, data.get("total_rounds", 3))
         h_timer = st.slider("Секунди на хід", 10, 120, data.get("duration", 60))
         
-        # 2. АВТО-ОНОВЛЕННЯ: якщо хост змінив цифри, відправляємо їх у базу одразу
         if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
             ref.update({
                 "total_rounds": h_rounds,
                 "duration": h_timer
             })
-            # Не робимо rerun тут, щоб не переривати введення користувача
         
         if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥"):
             ref.update({
@@ -323,8 +361,7 @@ elif st.session_state.game_state == "sync_lobby":
             })
             st.rerun()
     else:
-        # ЛОГІКА ДЛЯ ГРАВЦІВ (залишається як була, вона тепер бачитиме зміни миттєво)
-        st.warning("🕒 Очікуємо, поки хост запустить гру...")
+        st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
         current_r = data.get('total_rounds', 3)
         current_t = data.get('duration', 60)
         
@@ -336,20 +373,27 @@ elif st.session_state.game_state == "sync_lobby":
         """, unsafe_allow_html=True)
 
     if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
-        # Можна додати логіку видалення гравця зі списку, але поки просто вихід
         st.session_state.game_state = "setup"
         st.rerun()
     
-    # Автооновлення лобі кожні 2 секунди
     time.sleep(2)
     st.rerun()
 
 # --- ГРА (DISCORD SYNC) ---
 elif st.session_state.game_state == "playing_sync":
-    # --- БІЧНА ПАНЕЛЬ ДЛЯ ВИХОДУ ---
     with st.sidebar:
-        st.write(f"👤 Гравець: **{st.session_state.my_name}**")
+        st.write(f"👤 Ти: **{st.session_state.my_name}**")
         st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+        st.divider()
+        
+        # Відображення всіх гравців
+        st.write("👥 **Гравці в мережі:**")
+        players_list = data.get("players", [])
+        for p in players_list:
+            # Можна додати корону хосту або позначити себе
+            label = f"{p} (ти)" if p == st.session_state.my_name else p
+            st.caption(f"• {label}")
+            
         st.divider()
         if st.button("🔴 ВИЙТИ ДО НАЛАШТУВАНЬ"):
             st.session_state.game_state = "setup"
@@ -383,7 +427,7 @@ elif st.session_state.game_state == "playing_sync":
             "⏳ Очікуємо... Тим часом придумай, як пояснити слово 'Бебра'.",
             "🚀 Шанс випадіння тупого слова сьогодні — 99%.",
             "🦖 Обережно: занадто довге думання викликає тільт у тіммейтів.",
-            "🎮 Wezaxes Edition: грай, поки не згорить монітор."
+            "🎮 Ви вже намагались написати сюди слово хуй?"
         ]
         st.info(random.choice(quotes)) 
         
@@ -392,20 +436,14 @@ elif st.session_state.game_state == "playing_sync":
             if len(players) < 2:
                 st.error("Треба мінімум 2 гравці!")
             else:
-                # ЛОГІКА РОТАЦІЇ (БЕЗПЕЧНА)
                 last_explainer = data.get("explainer", "")
-                
-                # Якщо гравців рівно 2
                 if len(players) == 2:
-                    # Перевіряємо, чи останній пояснювач все ще в кімнаті
                     if last_explainer in players:
                         p1 = [p for p in players if p != last_explainer][0]
                         p2 = [p for p in players if p == last_explainer][0]
                     else:
-                        # Якщо хтось вийшов/зайшов новий — просто рандом
                         p1, p2 = random.sample(players, 2)
                 else:
-                    # Якщо більше двох гравців — завжди рандом
                     p1, p2 = random.sample(players, 2)
                 
                 ref.update({
@@ -445,7 +483,7 @@ elif st.session_state.game_state == "playing_sync":
                 st.warning("ТИ ВІДГАДУЄШ!")
                 st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
             else:
-                st.info(f"Глядач. Грають {data['explainer']} та {data['listener']}")
+                st.info(f"Ти поки що глядач. Грають {data['explainer']} та {data['listener']}")
         time.sleep(1)
         st.rerun()
 
@@ -511,8 +549,11 @@ elif st.session_state.game_state == "finished":
     for n, s in sorted_scores:
         st.write(f"### {n}: {s} балів")
     st.divider()
+    
+    st.write("🤖 **Маєш ідеї для нових слів чи режимів?**")
+    st.link_button("ЗАПРОПОНУВАТИ ІДЕЮ В ТГ 🚀", "https://t.me/wezaxes") 
+    
     if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
-        # Очищуємо статус кімнати в базі, щоб наступного разу вона створилася чистою
         if db and hasattr(st.session_state, 'room_id'):
             db.collection("rooms").document(st.session_state.room_id).update({"state": "finished"})
             
