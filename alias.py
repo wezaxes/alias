@@ -253,9 +253,9 @@ elif st.session_state.game_state == "setup":
             st.session_state.current_player_idx = 0
             st.session_state.current_round = 1
             if st.session_state.game_mode == "discord":
-                st.session_state.game_state = "waiting"
+                st.session_state.game_state = "waiting" # Для діскорду йдемо в очікування
             else:
-                st.session_state.game_state = "playing"
+                st.session_state.game_state = "playing_irl" # Для IRL йдемо в playing_irl
             st.rerun()
 
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
