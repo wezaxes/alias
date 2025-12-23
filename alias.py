@@ -228,10 +228,10 @@ elif st.session_state.game_state == "setup":
                         ref.update(data)
                 st.session_state.game_state = "sync_lobby"
                 st.rerun()
-            else: g_mode = st.session_state.game_mode
-                if g_mode == "irl":
-                    num = st.slider("Кількість команд?", 2, 4, 2)
-                    names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
+            
+    if st.session_state.game_mode == "irl":
+        num = st.slider("Кількість команд?", 2, 4, 2)
+        names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
                 else:
                     st.write("Введи імена гравців (через кому):")
                     names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
