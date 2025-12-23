@@ -7,14 +7,38 @@ import os
 st.set_page_config(page_title="Alias Ultimate - Wezaxes Edition", page_icon="🎮", layout="centered")
 
 # 2. Стилізація
+# 2. Стилізація
 st.markdown("""
     <style>
     .stButton { display: flex; justify-content: center; }
+    
+    /* Звичайні кнопки (вгадано, скіп тощо) */
     .stButton>button { 
         width: 100%; max-width: 500px; height: 4.5em; 
         font-size: 24px !important; font-weight: bold; 
         border-radius: 15px; margin-bottom: 10px; text-transform: uppercase;
     }
+
+    /* КНОПКИ-ПЛИТИ (Твій стиль перенесений на кнопки) */
+    div.stButton > button[key*="mode_"] {
+        height: 180px !important;
+        background: #585b70 !important; 
+        border: 3px solid #89b4fa !important; 
+        border-radius: 20px !important;
+        color: #f9e2af !important;
+        font-size: 22px !important;
+        text-transform: none !important; /* Щоб текст не був тільки великими літерами */
+        transition: 0.3s !important;
+        white-space: pre-line !important; /* Щоб працював перенос рядка */
+        display: block !important;
+    }
+
+    div.stButton > button[key*="mode_"]:hover {
+        background: #7f849c !important;
+        border-color: #fab387 !important;
+        transform: scale(1.02) !important;
+    }
+
     h1, h2, h3, p { text-align: center !important; }
     .word-box { 
         font-size: 42px; text-align: center; font-weight: bold; 
@@ -34,44 +58,9 @@ st.markdown("""
         border: 2px solid #f38ba8; padding: 10px; border-radius: 10px;
         margin-top: 20px; text-transform: uppercase;
     }
-    .mode-selection {
-        padding: 30px; 
-        border-radius: 20px; 
-        /* Змінив фон на світліший сіро-блакитний */
-        background: #585b70; 
-        /* Змінив рамку на яскраву білу або світло-блакитну */
-        border: 3px solid #89b4fa; 
-        margin-bottom: 20px;
-        transition: 0.3s;
-    }
-    .mode-selection:hover {
-        /* Ефект підсвічування при наведенні */
-        background: #7f849c;
-        border-color: #fab387;
-        transform: scale(1.02);
-    }
-    .mode-selection h3 {
-        color: #f9e2af !important; /* Робимо заголовок золотистим */
-        margin-top: 0;
-    }
-    .mode-selection p {
-        color: #cdd6f4 !important; /* Світлий текст опису */
-    }
-        /* Робимо контейнер відносним, щоб кнопка всередині не вилітала за межі */
-    .mode-container { position: relative; }
-
-    /* Ховаємо кнопку, але розтягуємо її на всю площу картки */
-    div.stButton > button[key*="overlay_"] {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: transparent !important;
-        border: none !important;
-        color: transparent !important;
-        z-index: 10;
-        cursor: pointer;
-    }
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- 3. РОБОТА З ФАЙЛОМ ---
 def load_words():
