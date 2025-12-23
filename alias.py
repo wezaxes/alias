@@ -232,28 +232,28 @@ elif st.session_state.game_state == "setup":
     if st.session_state.game_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
-                else:
-                    st.write("Введи імена гравців (через кому):")
-                    names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
-                    names = [n.strip() for n in names_raw.replace('\n', ',').split(',') if n.strip()]
-                rounds = st.number_input("Кількість раундів", 1, 20, 3)
-                timer = st.slider("Секунди на хід", 10, 120, 60)
-                if st.button("🔥 ПОЧАТИ ГРУ"):
-                    if len(names) < 2:
-                        st.error("Для гри треба хоча б двоє!")
-                    else:
-                        st.session_state.players = names
-                        st.session_state.scores = {n: 0 for n in names}
-                        st.session_state.total_rounds = rounds
-                        st.session_state.duration = timer
-                        st.session_state.game_words = st.session_state.all_words.copy()
-                        random.shuffle(st.session_state.game_words)
-                        st.session_state.current_player_idx = 0
-                        st.session_state.current_round = 1
-                        st.session_state.game_state = "waiting" if g_mode == "discord" else "playing"
-                        st.rerun()
-
-
+    else:
+        st.write("Введи імена гравців (через кому):")
+        names_raw = st.text_area("Імена:", "Катя, Петя, Маша, Саша")
+        names = [n.strip() for n in names_raw.replace('\n', ',').split(',') if n.strip()]
+               
+    rounds = st.number_input("Кількість раундів", 1, 20, 3)
+    timer = st.slider("Секунди на хід", 10, 120, 60)
+               
+    if st.button("🔥 ПОЧАТИ ГРУ"):
+        if len(names) < 2:
+            st.error("Для гри треба хоча б двоє!")
+        else:
+            st.session_state.players = names
+            st.session_state.scores = {n: 0 for n in names}
+            st.session_state.total_rounds = rounds
+            st.session_state.duration = timer
+            st.session_state.game_words = st.session_state.all_words.copy()
+            random.shuffle(st.session_state.game_words)
+            st.session_state.current_player_idx = 0
+            st.session_state.current_round = 1
+            st.session_state.game_state = "waiting" if g_mode == "discord" else "playing"
+            st.rerun()
 
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
