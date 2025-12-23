@@ -218,14 +218,25 @@ elif st.session_state.game_state == "setup":
             if db:
                 ref = db.collection("rooms").document(room_id)
                 doc = ref.get()
-                if not doc.exists:
-                    ref.set({"players": [my_name], "scores": {my_name: 0}, "state": "lobby", "explainer": "", "listener": "", "word": ""})
+                
+                # Якщо кімнати немає АБО вона вже завершена — створюємо її заново
+                if not doc.exists or doc.to_dict().get("state") == "finished":
+                    ref.set({
+                        "players": [my_name], 
+                        "scores": {my_name: 0}, 
+                        "state": "lobby", 
+                        "explainer": "", 
+                        "listener": "", 
+                        "word": "",
+                        "current_round": 1  # Скидаємо раунд на початок
+                    })
                 else:
                     data = doc.to_dict()
                     if my_name not in data["players"]:
                         data["players"].append(my_name)
                         data["scores"][my_name] = 0
                         ref.update(data)
+                
                 st.session_state.game_state = "sync_lobby"
                 st.rerun()
             
@@ -433,6 +444,10 @@ elif st.session_state.game_state == "finished":
         st.write(f"### {n}: {s} балів")
     st.divider()
     if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
+        # Очищуємо статус кімнати в базі, щоб наступного разу вона створилася чистою
+        if db and hasattr(st.session_state, 'room_id'):
+            db.collection("rooms").document(st.session_state.room_id).update({"state": "finished"})
+            
         st.session_state.game_state = "mode_select"
         st.session_state.current_player_idx = 0
         st.session_state.current_round = 1
