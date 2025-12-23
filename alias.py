@@ -325,10 +325,7 @@ elif st.session_state.game_state == "playing_sync":
             "🎮 Wezaxes Edition: грай, поки не згорить монітор."
         ]
         st.info(random.choice(quotes)) 
-        # ----------------------------
-
-        if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
-            # ... далі твій код кнопки ...
+        
         if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
             if len(data["players"]) < 2:
                 st.error("Треба мінімум 2 гравці!")
