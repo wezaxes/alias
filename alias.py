@@ -249,7 +249,6 @@ if st.session_state.game_mode == "discord":
                     st.rerun()
                     
     elif st.session_state.game_mode == "irl":
-        # Тут твій старий код для IRL, який ти просила не чіпати
         num = st.slider("Кількість команд?", 2, 4, 2)
         names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
         rounds = st.number_input("Кількість раундів", 1, 20, 3)
