@@ -315,12 +315,18 @@ elif st.session_state.game_state == "sync_lobby":
             })
             st.rerun()
     else:
-        st.warning("🕒 Очікуємо, поки хост налаштує гру...")
+        st.warning("🕒 Очікуємо, поки хост запустить гру...")
+        
+        # Витягуємо актуальні дані з бази, які міг змінити хост
+        current_r = data.get('total_rounds', 3)
+        current_t = data.get('duration', 60)
+        
         st.markdown(f"""
-            **Поточні налаштування:**
-            - Раундів: `{data.get('total_rounds', 3)}`
-            - Час: `{data.get('duration', 60)} сек`
-        """)
+            <div style="background-color: #313244; padding: 20px; border-radius: 15px; border: 1px solid #fab387;">
+                <p style="margin: 0; color: #cdd6f4;">Налаштування від хоста:</p>
+                <h3 style="margin: 10px 0; color: #fab387;">📊 Раундів: {current_r} | ⏱ Час: {current_t}с</h3>
+            </div>
+        """, unsafe_allow_html=True)
 
     if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
         # Можна додати логіку видалення гравця зі списку, але поки просто вихід
