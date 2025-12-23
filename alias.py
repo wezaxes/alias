@@ -99,7 +99,7 @@ if not st.session_state.welcome_done:
 if not st.session_state.playing and not st.session_state.game_over:
     st.title("⚙️ Налаштування Alias")
     
-        with st.expander("➕ Додати своє дебільне слово"):
+    with st.expander("➕ Додати своє дебільне слово"):
         st.warning("⚠️ Вписуйте тільки ті слова, які реально грабельні і які можна пояснити!")
         
         # Ініціалізація пам'яті для повідомлень та останнього слова, якщо їх ще немає
@@ -159,7 +159,6 @@ if not st.session_state.playing and not st.session_state.game_over:
         # Вивід останнього доданого слова (беремо з сесії)
         if st.session_state.last_added_word:
             st.markdown(f"**Останнє додане слово:** `{st.session_state.last_added_word}`")
-
 
     st.divider()
     
