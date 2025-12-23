@@ -78,7 +78,7 @@ st.markdown("""
             
     div[data-testid="stVerticalBlock"] > div.stElementContainer {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom:10px;
     }
 
     div.stButton {
