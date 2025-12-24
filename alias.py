@@ -197,10 +197,38 @@ elif st.session_state.game_state == "mode_select":
             st.session_state.game_state = "tutorial"; st.rerun()
 
 elif st.session_state.game_state == "setup":
-    if st.button("⬅️ НАЗАД"):
+    if st.button("⬅️ НАЗАД"): 
         st.session_state.game_state = "mode_select"; st.rerun()
-    st.title("⚙️ Налаштування")
     
+    st.markdown("### ⚙️ Налаштування")
+    
+    # 1. Нікнейм по центру
+    my_name = st.text_input("Твій нікнейм:", placeholder="Введи своє ім'я...")
+    st.divider()
+
+    # 2. Дві колонки для Хоста та Гостя
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
+        # Додаємо порожній простір, щоб кнопка була на одному рівні з нижньою кнопкою входу
+        st.markdown("<div style='height: 48px;'></div>", unsafe_allow_html=True) 
+        if st.button("СТВОРИТИ КІМНАТУ ✨"):
+            if my_name:
+                r_id = generate_room_code()
+                st.session_state.room_id = r_id; st.session_state.my_name = my_name
+                # Тут твоя логіка Firebase...
+                st.session_state.game_state = "sync_lobby"; st.rerun()
+            else: st.error("Спочатку введи нік!")
+
+    with col2:
+        st.markdown("<p style='text-align: center; font-weight: bold;'>Маєш код?</p>", unsafe_allow_html=True)
+        enter_code = st.text_input("Введи код:", placeholder="Наприклад: AB12X3", label_visibility="collapsed")
+        if st.button("УВІЙТИ 🚪"):
+            if my_name and enter_code:
+                # Тут твоя логіка входу...
+                st.session_state.game_state = "sync_lobby"; st.rerun()
+            else: st.error("Введи нік та код!")
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
