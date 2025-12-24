@@ -363,7 +363,7 @@ elif st.session_state.game_state == "playing_sync":
             "🎮 Ви вже намагались написати сюди слово хуй?"
         ]
         st.info(random.choice(quotes)) 
-        if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
+        if st.button("ПОЧАТИ ГРУ 🎲"):
             players = data["players"]
             if len(players) >= 2:
                 p1, p2 = random.sample(players, 2)
