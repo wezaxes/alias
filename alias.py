@@ -442,21 +442,38 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
 
             # --- ПІДСТАН 2: Активний хід (Таймер) ---
             else:
-                rem = int(data["t_end"] - time.time())
+                # Додаємо безпечне отримання значення. Якщо t_end немає, ставимо 0
+                t_end = data.get("t_end")
 
-                if rem <= 0:
-                    st.warning("⏰ Час вийшов!")
-                    if is_host:
-                        if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
-                            ref.update(
-                                {"explainer": "", "listener": "", "word": "", "current_round": current_round + 1})
+                if t_end is None:
+                    # Якщо таймера ще немає в базі, просто малюємо заглушку і робимо реран
+                    st.info("⌛ Готуємося до старту...")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    rem = int(t_end - time.time())
+
+                    if rem <= 0:
+                        st.warning("⏰ Час вийшов!")
+                        if is_host:
+                            if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
+                                # Очищаємо дані ходу для наступної пари
+                                ref.update({
+                                    "explainer": "",
+                                    "listener": "",
+                                    "word": "",
+                                    "t_end": None,  # Важливо очистити таймер
+                                    "current_round": current_round + 1
+                                })
+                                st.rerun()
+                        else:
+                            st.info("🕒 Очікуємо, поки хост переключить раунд...")
+                            time.sleep(2)
                             st.rerun()
                     else:
-                        st.info("🕒 Хост готує наступний раунд...")
-                        time.sleep(2)
-                        st.rerun()
-                else:
-                    st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+                        # Твій звичайний код відображення ходу
+                        st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+                        # ... далі твій код з кнопками ✅ ВГАДАНО / ❌ СКІП ...
 
                     if my_name == data["explainer"]:
                         st.success("ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
