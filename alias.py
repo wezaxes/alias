@@ -306,9 +306,7 @@ elif st.session_state.game_state == "setup":
             if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
                 word = new_word_raw.strip().capitalize()
                 low_word = word.lower()
-
-                # 2. ЗВИЧАЙНЕ ДОДАВАННЯ (виконається тільки якщо слово НЕ "хуй")
-                else:
+            else:
                     existing_low = [w.lower() for w in st.session_state.all_words]
                     if word != "":
                         if low_word in existing_low:
@@ -321,7 +319,6 @@ elif st.session_state.game_state == "setup":
                         
                         st.session_state.last_processed_input = new_word_raw
                         st.rerun()
-            
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
