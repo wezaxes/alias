@@ -141,7 +141,7 @@ if 'game_state' not in st.session_state:
 with st.sidebar:
     st.markdown("---")
     st.markdown("### 💡 Маєш ідею або щось зламалось?")
-    st.link_button("ЗАПРОПОНУВАТИ ФІЧУ/НАЯБІДНІЧАТЬ ✈️", "https://t.me/wezaxes", use_container_width=True)
+    st.link_button("ЗАПРОПОНУВАТИ ФІЧУ/НАЯБІДНІЧАТЬ ✈️", "https://t.me/aliashihibot", use_container_width=True)
     st.markdown("---")
 
 # Перевірка параметрів URL
@@ -228,7 +228,7 @@ elif st.session_state.game_state == "setup":
                 st.error(st.session_state.msg_data["text"])
         
         if st.session_state.last_added_word:
-            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
+            st.markdown(f"✅ Останнє додане слово: **{st.session_state.last_added_word}**")
 
     st.divider()
     
@@ -238,7 +238,7 @@ elif st.session_state.game_state == "setup":
         
         c_h, c_j = st.columns(2)
         with c_h:
-            st.write("Ти хост?")
+            st.write("Ти хостить будеш?")
             if st.button("СТВОРИТИ КІМНАТУ ✨"):
                 if my_name:
                     r_id = generate_room_code()
@@ -251,7 +251,7 @@ elif st.session_state.game_state == "setup":
                             "explainer": "", "listener": "", "word": ""
                         })
                         st.session_state.game_state = "sync_lobby"; st.rerun()
-                else: st.error("Введи нікнейм!")
+                else: st.error("Ну і як тебе записувать нам? ")
 
         with c_j:
             st.write("Маєш код?")
