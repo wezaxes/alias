@@ -486,7 +486,7 @@ if st.session_state.game_state == "sync_lobby":
 
         if st.button("ПОЧАТИ ГРУ 🔥", use_container_width=True):
             print("[GAME] Host started the match!")
-            ref.update({"state": "playing", "current_round": 1})
+            ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": ""})
             st.rerun()
     else:
         st.info("🕒 Чекаємо, поки хост запустить гру...")
@@ -611,6 +611,10 @@ elif st.session_state.game_state == "playing_sync":
         rem = int(data["t_end"] - time.time())
 
         if rem <= 0:
+            ref.update({
+                "explainer": "",
+                "listener": ""
+            })
             st.warning("⏰ Час вийшов!")
             if is_host:
                 if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
