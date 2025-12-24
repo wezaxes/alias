@@ -314,12 +314,19 @@ elif st.session_state.game_state == "setup":
             
             # --- ПЕРСОНАЛЬНИЙ ПРИКОЛ НА "ХУЙ" ---
             if low_word == "хуй":
-                st.session_state.msg_data = {"text": "🚨 СИСТЕМА ЗАБЛОКОВАНА ЧЕРЕЗ КРИТИЧНИЙ РІВЕНЬ БАЗИ", "type": "error"}
+                st.session_state.msg_data = {"text": "🚨 БАЗАНУЛИ!", "type": "error"}
                 
-                # Виводимо кота
-                st.image("https://media.Selection.com/static/v1/56c666504a984a86b976798a/56c666504a984a86b976798b/1455843477464/Cat_Judgment.jpg", caption="МИ НЕ ПРИДУМАЛИ НІЧОГО СМІШНОГО НА СЛОВО ХУЙ ТОМУ ЧКАЄМО ВАШІ ВАРІАНТИ.")    
+                # Центруємо гіфку з комп'ютером
+                st.markdown("""
+                    <div style="display: flex; justify-content: center;">
+                        <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Твій підпис
+                st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
+                
                 st.session_state.last_processed_input = new_word_raw
-                # Не робимо rerun одразу, щоб людина встигла побачити кота
                 st.stop() 
             # -----------------------------------
 
