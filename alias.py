@@ -388,27 +388,48 @@ elif st.session_state.game_state == "playing_sync":
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
     if not doc.exists:
-        st.session_state.game_state = "mode_select"; st.rerun()
+        st.session_state.game_state = "setup"; st.rerun()
     
     data = doc.to_dict()
     my_name = st.session_state.my_name
-    is_host = (data.get("host") == my_name)  # Перевірка, чи ти хост
+    is_host = (data.get("host") == my_name)
+    current_players = data.get("players", [])
+
+    # --- ЛОГІКА СПОВІЩЕНЬ ПРО ВХІД/ВИХІД ---
+    if "old_players" not in st.session_state:
+        st.session_state.old_players = current_players
+
+    # Хто зайшов
+    for p in current_players:
+        if p not in st.session_state.old_players:
+            st.toast(f"👋 {p} доєднався до гри!", icon="✨")
+    
+    # Хто вийшов
+    for p in st.session_state.old_players:
+        if p not in current_players:
+            st.toast(f"🏃 {p} покинув кімнату", icon="🚪")
+    
+    st.session_state.old_players = current_players
+    # ---------------------------------------
 
     with st.sidebar:
         st.write(f"👤 Ти: **{my_name}** {'(Адмін 👑)' if is_host else ''}")
         st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
         st.divider()
         
-        # ПОВЕРНУВ СПИСОК ГРАВЦІВ ТА РАХУНОК
         st.write("👥 **Гравці в мережі:**")
         scores = data.get("scores", {})
-        for p in data.get("players", []):
+        for p in current_players:
             score = scores.get(p, 0)
             st.caption(f"• {p}: {score} балів {'(ти)' if p == my_name else ''}")
         
         st.divider()
         if st.button("🔴 ВИЙТИ"):
-            st.session_state.game_state = "setup"; st.rerun()
+            # Видаляємо себе зі списку в базі перед виходом
+            new_list = [p for p in current_players if p != my_name]
+            ref.update({"players": new_list})
+            st.session_state.game_state = "setup"
+            st.rerun()
 
     total_rounds = data.get("total_rounds", 3)
     current_round = data.get("current_round", 1)
