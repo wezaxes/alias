@@ -608,13 +608,13 @@ elif st.session_state.game_state == "playing_sync":
 
     # Стан 2: Активний хід (таймер і слова)
     else:
-        if int(data["t_end"] - time.time()) <= 0:
+        rem = int(data["t_end"] - time.time())
+
+        if rem <= 0:
             st.warning("⏰ Час вийшов!")
             if is_host:
                 if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
                     ref.update({
-                        "explainer": "",
-                        "listener": "",
                         "word": "",
                         "current_round": current_round + 1 if is_host else current_round
                     })
@@ -624,7 +624,7 @@ elif st.session_state.game_state == "playing_sync":
                 time.sleep(2)
                 st.rerun()
         else:
-            st.subheader(f"⏱ Залишилось: {int(data["t_end"] - time.time())} сек")
+            st.subheader(f"⏱ Залишилось: {rem} сек")
             st.write(f"🎤 Пояснює: **{data['explainer']}** ➜ Слухає: **{data['listener']}**")
 
             if my_name == data["explainer"]:
