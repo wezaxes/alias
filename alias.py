@@ -297,7 +297,7 @@ elif st.session_state.game_state == "setup":
                 
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
         st.divider()
-            with st.expander("➕ Додати своє дебільне слово"):
+    with st.expander("➕ Додати своє дебільне слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         new_word_raw = st.text_input("Введи слово:", key="input_field")
 
