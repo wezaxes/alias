@@ -570,7 +570,7 @@ with game_display.container():
     time.sleep(1); st.rerun()
 
 # --- IRL РЕЖИМ ---
-elif st.session_state.game_state == "playing_irl":
+    elif st.session_state.game_state == "playing_irl":
     if st.session_state.current_round > st.session_state.total_rounds:
         st.session_state.game_state = "finished"
         st.rerun()
