@@ -450,17 +450,17 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
 
                 rem = int(t_end - time.time())
 
-                # Створюємо порожній контейнер, який будемо наповнювати
-                # Це важливо: він затирає все, що було в ньому раніше
-                game_container = st.empty()
+                # ОДИН контейнер для всього ігрового екрана
+                # Це видалить дублювання, бо контейнер перезаписує сам себе
+                main_placeholder = st.empty()
 
-                with game_container.container():
-                    # 1. ПЕРЕВІРКА ЗАВЕРШЕННЯ ЧАСУ
+                with main_placeholder.container():
                     if rem <= 0:
+                        # ЧІТКО: якщо час вийшов, показуємо тільки цей блок і ЗУПИНЯЄМО виконання далі
                         st.warning("⏰ ЧАС ВИЙШОВ!")
 
                         if is_host:
-                            if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True, key="next_turn_btn"):
+                            if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True, key="btn_next_final"):
                                 ref.update({
                                     "explainer": "",
                                     "listener": "",
@@ -471,12 +471,11 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
                                 st.rerun()
                         else:
                             st.info("🕒 Очікуємо, поки хост переключить раунд...")
-                            # Прибираємо довгий сон, щоб швидше підхопити зміни від хоста
                             time.sleep(1)
                             st.rerun()
 
-                    # 2. ВІДОБРАЖЕННЯ ГРИ (ТІЛЬКИ ЯКЩО rem > 0)
                     else:
+                        # Цей блок виконається ТІЛЬКИ якщо rem > 0
                         st.subheader(f"⏱ Залишилось: {rem} сек")
                         st.write(f"🎤 **{data['explainer']}** пояснює ➜ **{data['listener']}**")
 
@@ -485,12 +484,14 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
                             st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
 
                             c1, c2 = st.columns(2)
-                            if c1.button("✅ ВГАДАНО", use_container_width=True, key="win_btn_active"):
+                            # Використовуємо максимально унікальні ключі
+                            if c1.button("✅ ВГАДАНО", use_container_width=True, key=f"win_{rem}_{data['word']}"):
                                 new_scores = data.get("scores", {})
                                 new_scores[my_name] = new_scores.get(my_name, 0) + 1
                                 ref.update({"scores": new_scores, "word": random.choice(st.session_state.all_words)})
                                 st.rerun()
-                            if c2.button("❌ ПРОПУСТИТИ", use_container_width=True, key="skip_btn_active"):
+
+                            if c2.button("❌ ПРОПУСТИТИ", use_container_width=True, key=f"skip_{rem}_{data['word']}"):
                                 ref.update({"word": random.choice(st.session_state.all_words)})
                                 st.rerun()
 
@@ -504,7 +505,7 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
                                 f'<div class="word-box" style="font-size: 20px;">{data["explainer"]} пояснює...</div>',
                                 unsafe_allow_html=True)
 
-                        # Важливо для плавності таймера
+                        # Оновлюємо кожну секунду
                         time.sleep(1)
                         st.rerun()
     else:
