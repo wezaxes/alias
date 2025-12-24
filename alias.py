@@ -212,7 +212,7 @@ elif st.session_state.game_state == "setup":
     with col1:
         st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
         # Додаємо порожній простір, щоб кнопка була на одному рівні з нижньою кнопкою входу
-        st.markdown("<div style='height: 80px;'></div>", unsafe_allow_html=True) 
+        st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True) 
         if st.button("СТВОРИТИ КІМНАТУ ✨"):
             if my_name:
                 r_id = generate_room_code()
