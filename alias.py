@@ -43,7 +43,7 @@ st.markdown("""
     .mode-selection {
         padding: 30px; 
         border-radius: 20px; 
-        background: #585b70; 
+        background: #cdd6f4; /* Світлий фон (якщо хочеш чорні букви) */
         border: 3px solid #89b4fa; 
         margin-bottom: 20px;
         transition: 0.3s;
@@ -51,14 +51,29 @@ st.markdown("""
         display: block;
         width: 100%;
         text-decoration: none !important;
+        color: #000000 !important; /* Чорний колір для всього всередині */
     }
+
     .mode-selection:hover {
-        background: #7f849c;
+        background: #bac2de; /* Трохи темніший при наведенні */
         border-color: #fab387;
         transform: scale(1.02);
     }
-    .mode-selection h3 { color: #000000 !important; margin-top: 0; }
-    .mode-selection p { color: #000000 !important; }
+
+    /* Примусово робимо всі тексти чорними */
+    .mode-selection h3, 
+    .mode-selection p, 
+    .mode-selection span { 
+        color: #000000 !important; 
+        margin-top: 0; 
+        text-decoration: none !important;
+    }
+
+    /* Щоб посилання не міняло колір при натисканні */
+    a:link, a:visited, a:hover, a:active {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
 
     /* Стиль для кнопки фідбеку */
     .feedback-btn {
