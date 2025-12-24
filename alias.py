@@ -258,7 +258,7 @@ elif st.session_state.game_state == "setup":
             enter_code = st.text_input("Введи код:", key="join_input").upper().strip()
             if st.button("УВІЙТИ 🚪"):
                 if not my_name or not enter_code:
-                    st.error("Введи дані!")
+                    st.error("Шось не то понаписували, уточни код у хоста!")
                 else:
                     if db:
                         ref = db.collection("rooms").document(enter_code)
