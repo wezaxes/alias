@@ -293,20 +293,44 @@ elif st.session_state.game_state == "setup":
 
     st.divider()
     
-    # --- ЛОГІКА IRL ---
-elif st.session_state.game_mode == "irl":
-    num = st.slider("Кількість команд?", 2, 4, 2)
-    names = [st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}") for i in range(num)]
-    rounds = st.number_input("Кількість раундів", 1, 20, 3)
-    timer = st.slider("Секунди на хід", 10, 120, 60)
+    
+    # --- ЛОГІКА IRL (ОСЬ ТВОЇ НАЛАШТУВАННЯ ТУТ) ---
+    elif st.session_state.game_mode == "irl":
+        st.subheader("🏠 Налаштування гри вживу")
         
-    if st.button("🔥 ПОЧАТИ ГРУ"):
-        if len(names) < 2: st.error("Для гри треба хоча б двоє!")
-        else:
-            st.session_state.players = names; st.session_state.scores = {n: 0 for n in names}
-            st.session_state.total_rounds = rounds; st.session_state.duration = timer
-            st.session_state.current_player_idx = 0; st.session_state.current_round = 1
-            st.session_state.game_state = "playing_irl"; st.rerun()
+        num = st.slider("Кількість команд?", 2, 6, 2)
+        
+        # Поля для вводу імен команд
+        names = []
+        c_names = st.columns(2)
+        for i in range(num):
+            with c_names[i % 2]:
+                name = st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}")
+                names.append(name)
+        
+        st.divider()
+        
+        col_r, col_t = st.columns(2)
+        with col_r:
+            rounds = st.number_input("Кількість раундів", 1, 20, 3)
+        with col_t:
+            timer = st.slider("Секунди на хід", 10, 120, 60)
+        
+        st.divider()
+        
+        if st.button("🔥 ПОЧАТИ ГРУ"):
+            # Перевіряємо, чи імена команд не порожні
+            if any(n.strip() == "" for n in names):
+                st.error("Всі команди повинні мати назву!")
+            else:
+                st.session_state.players = names
+                st.session_state.scores = {n: 0 for n in names}
+                st.session_state.total_rounds = rounds
+                st.session_state.duration = timer
+                st.session_state.current_player_idx = 0
+                st.session_state.current_round = 1
+                st.session_state.game_state = "playing_irl"
+                st.rerun()
 
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
