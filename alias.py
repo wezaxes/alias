@@ -312,7 +312,40 @@ elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
-    if not doc.exists:
+
+    if doc.exists:
+        data = doc.to_dict()
+        current_players = data.get("players", [])
+        my_name = st.session_state.my_name
+        is_host = (data.get("host") == my_name)
+
+        # Сповіщення (тоасти)
+        if "old_players" not in st.session_state:
+            st.session_state.old_players = current_players
+        for p in current_players:
+            if p not in st.session_state.old_players:
+                st.toast(f"✨ {p} приєднався до гри!")
+        for p in st.session_state.old_players:
+            if p not in current_players:
+                st.toast(f"🚪 {p} лівнув з катки...")
+        st.session_state.old_players = current_players
+
+        with st.sidebar:
+            st.header("🎮 Alias Sync")
+            st.write(f"🏠 Код: **{st.session_state.room_id}**")
+            st.write(f"👤 Ти: **{my_name}** {'(👑)' if is_host else ''}")
+            st.divider()
+            st.write("👥 Гравці:")
+            for p in current_players:
+                st.caption(f"• {p} {'(Хост)' if p == data.get('host') else ''}")
+
+            if st.button("🔴 ВИЙТИ З ГРИ", key="exit_btn"):
+                updated_players = [p for p in current_players if p != my_name]
+                ref.update({"players": updated_players})
+                del st.session_state.room_id
+                st.session_state.game_state = "mode_select"
+                st.rerun()
+    elif doc.exists:
         st.error("Кімнату не знайдено!"); st.session_state.game_state = "setup"; st.rerun()
     
     data = doc.to_dict()
