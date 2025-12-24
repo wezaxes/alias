@@ -306,7 +306,7 @@ elif st.session_state.game_mode == "irl":
     for i in range(num):
         with c_names[i % 2]:
              name = st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}")
-            names.append(name)
+             names.append(name)
         
     st.divider()
         
