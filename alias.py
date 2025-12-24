@@ -312,7 +312,7 @@ elif st.session_state.game_state == "setup":
             word = new_word_raw.strip().capitalize()
             low_word = word.lower()
             
-            # 1. ПЕРЕВІРКА НА ПРИКОЛ
+            # 1. ПЕРЕВІРКА НА ПРИКОЛ (Якщо ввели "хуй")
             if low_word == "хуй":
                 st.session_state.msg_data = {"text": "🚨 БАЗАНУЛИ!", "type": "error"}
                 st.markdown("""
@@ -327,10 +327,10 @@ elif st.session_state.game_state == "setup":
                 time.sleep(20)
                 st.rerun()
 
-            # 2. ЛОГІКА ДЛЯ ВСІХ ІНШИХ СЛІВ (виконається тільки якщо це не "хуй")
-            existing_low = [w.lower() for w in st.session_state.all_words]
-
-            if word != "":
+            # 2. ЛОГІКА ДЛЯ ВСІХ ІНШИХ СЛІВ (Спрацює, тільки якщо перша умова не підійшла)
+            elif word != "":
+                existing_low = [w.lower() for w in st.session_state.all_words]
+                
                 if low_word in existing_low:
                     st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
                 else:
