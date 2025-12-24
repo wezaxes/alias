@@ -515,7 +515,8 @@ with game_display.container():
                 "📐 2x² - 3x + 1 та x² + 3x - 4",
                 "😁 Ми теж не знаємо що таке Барбадос."
             ]
-            st.info(random.choice(quotes)) 
+            msg = data.get("current_quote", "Придумуємо смішний текст, почекайте")
+            st.info(msg) 
             
             if is_host:
                 if st.button("ПОЧАТИ ГРУ 🎲"):
@@ -526,6 +527,7 @@ with game_display.container():
                             "explainer": p1, "listener": p2, 
                             "word": random.choice(st.session_state.all_words), 
                             "t_end": time.time() + data.get("duration", 60)
+                            "current_quote": ""
                         })
                         st.rerun()
                     else:
@@ -538,7 +540,13 @@ with game_display.container():
                 st.warning("Час вийшов!")
                 if is_host:
                     if st.button("Наступна пара ➡️"):
-                        ref.update({"explainer": "", "listener": "", "word": "", "current_round": current_round + 1})
+                        ref.update({
+                            "explainer": "", 
+                            "listener": "", 
+                            "word": "", 
+                            "current_round": current_round + 1,
+                            "current_quote": random.choice(quotes) # Нова цитата для нового раунду
+                        })
                         st.rerun()
                 else:
                     st.info("Очікуємо, поки хост перемкне раунд...")
