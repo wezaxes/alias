@@ -297,28 +297,35 @@ elif st.session_state.game_state == "setup":
                 
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
         st.divider()
-        with st.expander("➕ Додати своє слово"):
-            st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
-            
-            new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
-            add_button = st.button("ДОДАТИ В СЛОВНИК")
+            with st.expander("➕ Додати своє дебільне слово"):
+        st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
+        new_word_raw = st.text_input("Введи слово:", key="input_field")
 
-            if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
-                word = new_word_raw.strip().capitalize()
-                low_word = word.lower()
+        if st.button("ДОДАТИ В СЛОВНИК"):
+            word = new_word_raw.strip().capitalize()
+            low_word = word.lower()
+            existing_low = [w.lower() for w in st.session_state.all_words]
+
+            if word != "":
+                if low_word in existing_low:
+                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+                else:
+                    st.session_state.all_words.append(word)
+                    st.session_state.last_added_word = word
+                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                    append_word_to_file(word)
+                st.rerun()
+
+        if st.session_state.msg_data["text"]:
+            if st.session_state.msg_data["type"] == "success":
+                st.success(st.session_state.msg_data["text"])
             else:
-                    existing_low = [w.lower() for w in st.session_state.all_words]
-                    if word != "":
-                        if low_word in existing_low:
-                            st.session_state.msg_data = {"text": "Таке слово вже є, придумай ще щось!", "type": "error"}
-                        else:
-                            st.session_state.all_words.append(word)
-                            st.session_state.last_added_word = word
-                            st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слво!", "type": "success"}
-                            append_word_to_file(word)
-                        
-                        st.session_state.last_processed_input = new_word_raw
-                        st.rerun()
+                st.error(st.session_state.msg_data["text"])
+        
+        if st.session_state.last_added_word:
+            st.markdown(f"✅ Останнє додане: **{st.session_state.last_added_word}**")
+
+    st.divider()
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
