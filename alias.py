@@ -307,6 +307,10 @@ elif st.session_state.game_state == "setup":
         if st.session_state.last_added_word:
             st.markdown(f"✅ Останнє: **{st.session_state.last_added_word}**")
 
+import streamlit as st
+import time
+import random
+
 # --- 1. ЗАГАЛЬНА ЛОГІКА ТА САЙДБАР (Спільне для Лобі та Гри) ---
 if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby", "playing_sync"]:
     ref = db.collection("rooms").document(st.session_state.room_id)
@@ -331,6 +335,7 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
 
         # Малюємо сайдбар
         with st.sidebar:
+            st.header("🎮 Alias Sync")
             st.write(f"🏠 Код: **{st.session_state.room_id}**")
             st.write(f"👤 Ти: **{my_name}** {'(👑)' if is_host else ''}")
             st.divider()
@@ -430,55 +435,54 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
                             st.rerun()
                         else:
                             st.error("Потрібно мінімум 2 гравці!")
-                    else:
-                        st.warning("⏳ Хост готує наступний хід...")
-                        time.sleep(2)
-                        st.rerun()
-
-                            # --- ПІДСТАН 2: Активний хід (Таймер) ---
                 else:
-                    rem = int(data["t_end"] - time.time())
+                    st.warning("⏳ Хост готує наступний хід...")
+                    time.sleep(2)
+                    st.rerun()
 
-                    if rem <= 0:
-                        st.warning("⏰ Час вийшов!")
-                        if is_host:
-                            if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
-                                ref.update({"explainer": "", "listener": "", "word": "",                                                "current_round": current_round + 1})
-                                st.rerun()
-                            else:
-                                st.info("🕒 Хост готує наступний раунд...")
-                                time.sleep(2)
-                                st.rerun()
-                        else:
-                            st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+            # --- ПІДСТАН 2: Активний хід (Таймер) ---
+            else:
+                rem = int(data["t_end"] - time.time())
 
-                            if my_name == data["explainer"]:
-                                st.success("ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
-                                st.markdown(f'<div class="word-box">{data["word"].upper()}</div>',
-                                            unsafe_allow_html=True)
-                                c1, c2 = st.columns(2)
-                                if c1.button("✅ ВГАДАНО", use_container_width=True):
-                                    new_scores = data.get("scores", {})
-                                    new_scores[my_name] = new_scores.get(my_name, 0) + 1
-                                    ref.update(
-                                        {"scores": new_scores, "word": random.choice(st.session_state.all_words)})
-                                    st.rerun()
-                                if c2.button("❌ ПРОПУСТИТИ", use_container_width=True):
-                                    ref.update({"word": random.choice(st.session_state.all_words)})
-                                    st.rerun()
-
-                            elif my_name == data["listener"]:
-                                st.warning("ТИ ВІДГАДУЄШ!")
-                                st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
-                            else:
-                                st.info(f"Грають {data['explainer']} та {data['listener']}")
-
-                            time.sleep(1)
+                if rem <= 0:
+                    st.warning("⏰ Час вийшов!")
+                    if is_host:
+                        if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
+                            ref.update(
+                                {"explainer": "", "listener": "", "word": "", "current_round": current_round + 1})
                             st.rerun()
                     else:
-                        st.error("Кімнату не знайдено!")
-                        st.session_state.game_state = "mode_select"
+                        st.info("🕒 Хост готує наступний раунд...")
+                        time.sleep(2)
                         st.rerun()
+                else:
+                    st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
+
+                    if my_name == data["explainer"]:
+                        st.success("ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
+                        st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
+                        c1, c2 = st.columns(2)
+                        if c1.button("✅ ВГАДАНО", use_container_width=True):
+                            new_scores = data.get("scores", {})
+                            new_scores[my_name] = new_scores.get(my_name, 0) + 1
+                            ref.update({"scores": new_scores, "word": random.choice(st.session_state.all_words)})
+                            st.rerun()
+                        if c2.button("❌ ПРОПУСТИТИ", use_container_width=True):
+                            ref.update({"word": random.choice(st.session_state.all_words)})
+                            st.rerun()
+
+                    elif my_name == data["listener"]:
+                        st.warning("ТИ ВІДГАДУЄШ!")
+                        st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
+                    else:
+                        st.info(f"Грають {data['explainer']} та {data['listener']}")
+
+                    time.sleep(1)
+                    st.rerun()
+    else:
+        st.error("Кімнату не знайдено!")
+        st.session_state.game_state = "mode_select"
+        st.rerun()
 # --- IRL РЕЖИМ ---
 elif st.session_state.game_state == "playing_irl":
     if st.session_state.current_round > st.session_state.total_rounds:
