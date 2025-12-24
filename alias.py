@@ -202,33 +202,51 @@ elif st.session_state.game_state == "setup":
     
     st.markdown("### ⚙️ Налаштування")
     
-    # 1. Нікнейм по центру
-    my_name = st.text_input("Твій нікнейм:", placeholder="Введи шось прикольне...")
+    # 1. Нікнейм - спільний для всіх режимів
+    my_name = st.text_input("Твій нікнейм:", placeholder="Введи шось прикольне...", key="setup_name")
     st.divider()
 
-    # 2. Дві колонки для Хоста та Гостя
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
-        # Додаємо порожній простір, щоб кнопка була на одному рівні з нижньою кнопкою входу
-        st.markdown("<div style='height: 57px;'></div>", unsafe_allow_html=True) 
-        if st.button("СТВОРИТИ КІМНАТУ ✨"):
-            if my_name:
-                r_id = generate_room_code()
-                st.session_state.room_id = r_id; st.session_state.my_name = my_name
-                # Тут твоя логіка Firebase...
-                st.session_state.game_state = "sync_lobby"; st.rerun()
-            else: st.error("Спочатку введи нік!")
+    # --- ЛОГІКА DISCORD ---
+    if st.session_state.game_mode == "discord":
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 57px;'></div>", unsafe_allow_html=True) # Вирівнювач
+            if st.button("СТВОРИТИ КІМНАТУ ✨"):
+                if my_name:
+                    r_id = generate_room_code()
+                    st.session_state.room_id = r_id
+                    st.session_state.my_name = my_name
+                    if db:
+                        db.collection("rooms").document(r_id).set({
+                            "host": my_name, "players": [my_name], "scores": {my_name: 0},
+                            "state": "lobby", "total_rounds": 3, "duration": 60, "current_round": 1,
+                            "explainer": "", "listener": "", "word": ""
+                        })
+                        st.session_state.game_state = "sync_lobby"; st.rerun()
+                else: st.error("Ну і як тебе записувать нам?")
 
-    with col2:
-        st.markdown("<p style='text-align: center; font-weight: bold;'>Маєш код?</p>", unsafe_allow_html=True)
-        enter_code = st.text_input("Введи код:", placeholder="Наприклад: AB12X3", label_visibility="collapsed")
-        if st.button("УВІЙТИ 🚪"):
-            if my_name and enter_code:
-                # Тут твоя логіка входу...
-                st.session_state.game_state = "sync_lobby"; st.rerun()
-            else: st.error("Введи нік та код!")
+        with col2:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Маєш код?</p>", unsafe_allow_html=True)
+            enter_code = st.text_input("Введи код:", placeholder="Код тут...", label_visibility="collapsed", key="join_input_sync").upper().strip()
+            if st.button("УВІЙТИ 🚪"):
+                if not my_name or not enter_code:
+                    st.error("Шось не те понаписували!")
+                else:
+                    if db:
+                        ref = db.collection("rooms").document(enter_code)
+                        doc = ref.get()
+                        if doc.exists:
+                            data = doc.to_dict()
+                            st.session_state.room_id = enter_code
+                            st.session_state.my_name = my_name
+                            if my_name not in data["players"]:
+                                data["players"].append(my_name)
+                                data["scores"][my_name] = 0
+                                ref.update({"players": data["players"], "scores": data["scores"]})
+                            st.session_state.game_state = "sync_lobby"; st.rerun()
+                        else: st.error("❌ Код невірний!")
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
@@ -260,49 +278,6 @@ elif st.session_state.game_state == "setup":
 
     st.divider()
     
-    # --- ЛОГІКА DISCORD (Оновлена з генератором та валідацією коду) ---
-    if st.session_state.game_mode == "discord":
-        my_name = st.text_input("Твій нікнейм:")
-        
-        c_h, c_j = st.columns(2)
-        with c_h:
-            st.write("Ти хостить будеш?")
-            if st.button("СТВОРИТИ КІМНАТУ ✨"):
-                if my_name:
-                    r_id = generate_room_code()
-                    st.session_state.room_id = r_id
-                    st.session_state.my_name = my_name
-                    if db:
-                        db.collection("rooms").document(r_id).set({
-                            "host": my_name, "players": [my_name], "scores": {my_name: 0},
-                            "state": "lobby", "total_rounds": 3, "duration": 60, "current_round": 1,
-                            "explainer": "", "listener": "", "word": ""
-                        })
-                        st.session_state.game_state = "sync_lobby"; st.rerun()
-                else: st.error("Ну і як тебе записувать нам? ")
-
-        with c_j:
-            st.write("Маєш код?")
-            enter_code = st.text_input("Введи код:", key="join_input").upper().strip()
-            if st.button("УВІЙТИ 🚪"):
-                if not my_name or not enter_code:
-                    st.error("Шось не то понаписували, уточни код у хоста!")
-                else:
-                    if db:
-                        ref = db.collection("rooms").document(enter_code)
-                        doc = ref.get()
-                        if doc.exists:
-                            data = doc.to_dict()
-                            st.session_state.room_id = enter_code
-                            st.session_state.my_name = my_name
-                            if my_name not in data["players"]:
-                                data["players"].append(my_name)
-                                data["scores"][my_name] = 0
-                                ref.update({"players": data["players"], "scores": data["scores"]})
-                            st.session_state.game_state = "sync_lobby"; st.rerun()
-                        else:
-                            st.error("❌ Кімнату з таким кодом не знайдено!")
-
     # --- ЛОГІКА IRL ---
     elif st.session_state.game_mode == "irl":
         num = st.slider("Кількість команд?", 2, 4, 2)
