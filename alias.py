@@ -303,25 +303,17 @@ elif st.session_state.game_state == "setup":
             new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
             add_button = st.button("ДОДАТИ В СЛОВНИК")
 
-            # Перевірка вводу
             if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
                 word = new_word_raw.strip().capitalize()
                 low_word = word.lower()
-                st.session_state.last_processed_input = new_word_raw # Одразу фіксуємо ввід
+                
+                # Фіксуємо ввід, щоб не було дублів
+                st.session_state.last_processed_input = new_word_raw
 
-                # 1. СЦЕНАРІЙ ДЛЯ "ХУЙ"
+                # 1. ПЕРЕВІРКА НА "ХУЙ"
                 if low_word == "хуй":
-                    # Показуємо прикол
-                    st.error("🚨 БАЗАНУЛИ!")
-                    st.markdown("""
-                        <div style="display: flex; justify-content: center;">
-                            <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
-                    
-                    import time
-                    time.sleep(20)
+                    # Встановлюємо прапорець приколу в сесію
+                    st.session_state.show_troll = True
                     st.rerun()
 
                 # 2. СЦЕНАРІЙ ДЛЯ ВСІХ ІНШИХ СЛІВ
@@ -338,7 +330,32 @@ elif st.session_state.game_state == "setup":
                 
                 st.session_state.last_processed_input = new_word_raw
                 st.rerun()
-    
+
+        # --- ВІДОБРАЖЕННЯ ПРИКОЛУ (ПОЗА ЕКСПАНДЕРОМ) ---
+        if st.session_state.get("show_troll"):
+            st.error("🚨 БАЗАНУЛИ!")
+            st.markdown("""
+                <div style="display: flex; justify-content: center;">
+                    <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
+                </div>
+            """, unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
+            
+            # Кнопка, щоб закрити прикол (або почекати)
+            if st.button("Я більше так не буду (вибачитись)"):
+                st.session_state.show_troll = False
+                st.rerun()
+            
+            # Авто-закриття через 20 секунд без блокування
+            import time
+            if "troll_time" not in st.session_state:
+                st.session_state.troll_time = time.time()
+            
+            if time.time() - st.session_state.troll_time > 20:
+                st.session_state.show_troll = False
+                del st.session_state.troll_time
+                st.rerun()
+            
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
