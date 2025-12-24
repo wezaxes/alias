@@ -326,7 +326,7 @@ elif st.session_state.game_state == "setup":
 
                 # 2. СЦЕНАРІЙ ДЛЯ ВСІХ ІНШИХ СЛІВ
                 elif word != "":
-                existing_low = [w.lower() for w in st.session_state.all_words]
+                    existing_low = [w.lower() for w in st.session_state.all_words]
                 
                 if low_word in existing_low:
                     st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
