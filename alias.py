@@ -306,22 +306,6 @@ elif st.session_state.game_state == "setup":
             if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
                 word = new_word_raw.strip().capitalize()
                 low_word = word.lower()
-                
-                # 1. ПЕРЕВІРКА НА ПРИКОЛ
-                if low_word == "хуй":
-                    st.session_state.msg_data = {"text": "🚨 БАЗАНУЛИ!", "type": "error"}
-                    st.markdown("""
-                        <div style="display: flex; justify-content: center;">
-                            <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
-                    
-                    st.session_state.last_processed_input = new_word_raw
-                    # Просто пауза без складних умов
-                    import time
-                    time.sleep(10) # Давай спробуємо 10 секунд для тесту
-                    st.rerun()
 
                 # 2. ЗВИЧАЙНЕ ДОДАВАННЯ (виконається тільки якщо слово НЕ "хуй")
                 else:
