@@ -352,12 +352,37 @@ elif st.session_state.game_state == "sync_lobby":
         st.error("Кімнату не знайдено!"); st.session_state.game_state = "setup"; st.rerun()
     
     data = doc.to_dict()
+    current_players = data.get("players", [])
+
+    # --- ЛОГІКА СПОВІЩЕНЬ ТА САЙДБАР (ДОДАНО СЮДИ) ---
+    if "old_players_lobby" not in st.session_state:
+        st.session_state.old_players_lobby = current_players
+
+    # Сповіщення
+    for p in current_players:
+        if p not in st.session_state.old_players_lobby:
+            st.toast(f"👋 {p} доєднався!", icon="✨")
+    for p in st.session_state.old_players_lobby:
+        if p not in current_players:
+            st.toast(f"🏃 {p} вийшов", icon="🚪")
+    st.session_state.old_players_lobby = current_players
+
+    # Сайдбар у лобі
+    with st.sidebar:
+        st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+        st.write(f"👤 Ти: **{st.session_state.my_name}**")
+        st.divider()
+        st.write("👥 **Гравці в черзі:**")
+        for p in current_players:
+            st.caption(f"• {p} {'(хост 👑)' if p == data.get('host') else ''}")
+
+    # Перехід до гри, якщо хост натиснув старт
     if data.get("state") == "playing":
         st.session_state.game_state = "playing_sync"; st.rerun()
 
     st.write("### Гравці в лобі:")
     cols = st.columns(3)
-    for i, p in enumerate(data.get("players", [])):
+    for i, p in enumerate(current_players):
         cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_lobby_{i}")
     
     st.divider()
