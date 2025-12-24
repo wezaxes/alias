@@ -399,9 +399,10 @@ elif st.session_state.game_state == "playing_sync":
 
 # --- IRL РЕЖИМ ---
 elif st.session_state.game_state == "playing_irl":
-        if st.session_state.current_round > st.session_state.total_rounds:
+    if st.session_state.current_round > st.session_state.total_rounds:
         st.session_state.game_state = "finished"
         st.rerun()
+
     active = st.session_state.players[st.session_state.current_player_idx]
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
         st.title(f"Раунд {st.session_state.current_round} з {st.session_state.total_rounds}")
