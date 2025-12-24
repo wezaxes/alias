@@ -217,7 +217,7 @@ elif st.session_state.game_state == "setup":
     
     st.markdown("### ⚙️ Налаштування")
     
-    # 1. Нікнейм - спільний для всіх режимів
+    # 1. Нікнейм
     my_name = st.text_input("Твій нікнейм:", placeholder="Введи шось прикольне...", key="setup_name")
     st.divider()
 
@@ -227,7 +227,7 @@ elif st.session_state.game_state == "setup":
         
         with col1:
             st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
-            st.markdown("<div style='height: 57px;'></div>", unsafe_allow_html=True) # Вирівнювач
+            st.markdown("<div style='height: 57px;'></div>", unsafe_allow_html=True)
             if st.button("СТВОРИТИ КІМНАТУ ✨"):
                 if my_name:
                     r_id = generate_room_code()
@@ -262,6 +262,39 @@ elif st.session_state.game_state == "setup":
                                 ref.update({"players": data["players"], "scores": data["scores"]})
                             st.session_state.game_state = "sync_lobby"; st.rerun()
                         else: st.error("❌ Код невірний!")
+
+    # --- ЛОГІКА IRL (ВИПРАВЛЕНО ТУТ) ---
+    elif st.session_state.game_mode == "irl":
+        st.subheader("🏠 Налаштування гри вживу")
+        num = st.slider("Кількість команд?", 2, 6, 2)
+        names = []
+        c_names = st.columns(2)
+        for i in range(num):
+            with c_names[i % 2]:
+                name = st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}")
+                names.append(name)
+        
+        st.divider()
+        col_r, col_t = st.columns(2)
+        with col_r:
+            rounds = st.number_input("Кількість раундів", 1, 20, 3)
+        with col_t:
+            timer = st.slider("Секунди на хід", 10, 120, 60)
+        
+        st.divider()
+        if st.button("🔥 ПОЧАТИ ГРУ"):
+            if any(n.strip() == "" for n in names):
+                st.error("Всі команди повинні мати назву!")
+            else:
+                st.session_state.players = names
+                st.session_state.scores = {n: 0 for n in names}
+                st.session_state.total_rounds = rounds
+                st.session_state.duration = timer
+                st.session_state.current_player_idx = 0
+                st.session_state.current_round = 1
+                st.session_state.game_state = "playing_irl"
+                st.rerun()
+                
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
@@ -293,33 +326,6 @@ elif st.session_state.game_state == "setup":
 
     st.divider()
     
-    
-    # --- ЛОГІКА IRL ---
-elif st.session_state.game_mode == "irl":
-    st.subheader("🏠 Налаштування гри вживу")
-    num = st.slider("Кількість команд?", 2, 6, 2)
-    names = []
-    c_names = st.columns(2)
-    for i in range(num):
-        with c_names[i % 2]:
-            name = st.text_input(f"Команда {i+1}", f"Команда {i+1}", key=f"n_{i}")
-            names.append(name)
-    st.divider()
-    col_r, col_t = st.columns(2)
-    with col_r:
-        rounds = st.number_input("Кількість раундів", 1, 20, 3)
-    with col_t:
-        timer = st.slider("Секунди на хід", 10, 120, 60)
-    st.divider()
-    if st.button("🔥 ПОЧАТИ ГРУ"):
-        if any(n.strip() == "" for n in names):
-            st.error("Всі команди повинні мати назву!")
-        else:
-            st.session_state.players = names; st.session_state.scores = {n: 0 for n in names}
-            st.session_state.total_rounds = rounds; st.session_state.duration = timer
-            st.session_state.current_player_idx = 0; st.session_state.current_round = 1
-            st.session_state.game_state = "playing_irl"; st.rerun()
-
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
