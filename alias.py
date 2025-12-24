@@ -296,39 +296,36 @@ elif st.session_state.game_state == "setup":
                 st.rerun()
                 
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
-    # Спільне для обох режимів: додавання слів
-    st.divider()
-    with st.expander("➕ Додати своє слово"):
-        st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
-        
-        # Поле вводу. Коли натиснеш Enter, значення запишеться в new_word_raw
-        new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
-        
-        # Кнопка залишається як альтернатива
-        add_button = st.button("ДОДАТИ В СЛОВНИК")
-
-        # Логіка спрацьовує АБО якщо натиснули кнопку, АБО через Enter
-        if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
-            word = new_word_raw.strip().capitalize()
-            low_word = word.lower()
+        st.divider()
+        with st.expander("➕ Додати своє слово"):
+            st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
             
-            # 1. ПЕРЕВІРКА НА ПРИКОЛ (Якщо ввели "хуй")
-            if low_word == "хуй":
-                st.session_state.msg_data = {"text": "🚨 БАЗАНУЛИ!", "type": "error"}
-                st.markdown("""
-                    <div style="display: flex; justify-content: center;">
-                        <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
-                    </div>
-                """, unsafe_allow_html=True)
-                st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
-                
-                st.session_state.last_processed_input = new_word_raw
-                import time
-                time.sleep(20)
-                st.rerun()
+            new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
+            add_button = st.button("ДОДАТИ В СЛОВНИК")
 
-            # 2. ЛОГІКА ДЛЯ ВСІХ ІНШИХ СЛІВ (Спрацює, тільки якщо перша умова не підійшла)
-            elif word != "":
+            # Перевірка вводу
+            if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
+                word = new_word_raw.strip().capitalize()
+                low_word = word.lower()
+                st.session_state.last_processed_input = new_word_raw # Одразу фіксуємо ввід
+
+                # 1. СЦЕНАРІЙ ДЛЯ "ХУЙ"
+                if low_word == "хуй":
+                    # Показуємо прикол
+                    st.error("🚨 БАЗАНУЛИ!")
+                    st.markdown("""
+                        <div style="display: flex; justify-content: center;">
+                            <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
+                    
+                    import time
+                    time.sleep(20)
+                    st.rerun()
+
+                # 2. СЦЕНАРІЙ ДЛЯ ВСІХ ІНШИХ СЛІВ
+                elif word != "":
                 existing_low = [w.lower() for w in st.session_state.all_words]
                 
                 if low_word in existing_low:
