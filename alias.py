@@ -57,8 +57,8 @@ st.markdown("""
         border-color: #fab387;
         transform: scale(1.02);
     }
-    .mode-selection h3 { color: #f9e2af !important; margin-top: 0; }
-    .mode-selection p { color: #cdd6f4 !important; }
+    .mode-selection h3 { color: #000000 !important; margin-top: 0; }
+    .mode-selection p { color: #000000 !important; }
 
     /* Стиль для кнопки фідбеку */
     .feedback-btn {
