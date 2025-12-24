@@ -371,8 +371,8 @@ elif st.session_state.game_state in ["sync_lobby", "playing_sync"]:
 
         # --- СПІЛЬНИЙ САЙДБАР ---
         with st.sidebar:
-            st.write(f"👤 Ти: **{my_name}** {'(👑 Хост)' if is_host else ''}")
-            st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+            # st.write(f"👤 Ти: **{my_name}** {'(👑 Хост)' if is_host else ''}")
+            # st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
             st.divider()
             st.write("👥 **Гравці в мережі:**")
             for p in current_players:
