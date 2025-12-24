@@ -602,11 +602,11 @@ with game_display.container():
 # ==========================================
 # 8. ЕКРАН ФІНАЛУ
 # ==========================================
-elif st.session_state.game_state == "finished":
-    st.balloons()
-    st.title("🏆 РЕЗУЛЬТАТИ")
-    for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
-        st.write(f"### {n}: {s} балів")
-    if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
-        st.session_state.game_state = "mode_select"
-        st.rerun()
+    elif st.session_state.game_state == "finished":
+         st.balloons()
+         st.title("🏆 РЕЗУЛЬТАТИ")
+         for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
+             st.write(f"### {n}: {s} балів")
+         if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
+            st.session_state.game_state = "mode_select"
+            st.rerun()
