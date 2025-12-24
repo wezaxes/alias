@@ -307,54 +307,36 @@ elif st.session_state.game_state == "setup":
                 word = new_word_raw.strip().capitalize()
                 low_word = word.lower()
                 
-                # Фіксуємо ввід, щоб не було дублів
-                st.session_state.last_processed_input = new_word_raw
-
-                # 1. ПЕРЕВІРКА НА "ХУЙ"
+                # 1. ПЕРЕВІРКА НА ПРИКОЛ
                 if low_word == "хуй":
-                    # Встановлюємо прапорець приколу в сесію
-                    st.session_state.show_troll = True
+                    st.session_state.msg_data = {"text": "🚨 БАЗАНУЛИ!", "type": "error"}
+                    st.markdown("""
+                        <div style="display: flex; justify-content: center;">
+                            <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
+                    
+                    st.session_state.last_processed_input = new_word_raw
+                    # Просто пауза без складних умов
+                    import time
+                    time.sleep(10) # Давай спробуємо 10 секунд для тесту
                     st.rerun()
 
-                # 2. СЦЕНАРІЙ ДЛЯ ВСІХ ІНШИХ СЛІВ
-                elif word != "":
-                    existing_low = [w.lower() for w in st.session_state.all_words]
-                
-                if low_word in existing_low:
-                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+                # 2. ЗВИЧАЙНЕ ДОДАВАННЯ (виконається тільки якщо слово НЕ "хуй")
                 else:
-                    st.session_state.all_words.append(word)
-                    st.session_state.last_added_word = word
-                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
-                    append_word_to_file(word)
-                
-                st.session_state.last_processed_input = new_word_raw
-                st.rerun()
-
-        # --- ВІДОБРАЖЕННЯ ПРИКОЛУ (ПОЗА ЕКСПАНДЕРОМ) ---
-        if st.session_state.get("show_troll"):
-            st.error("🚨 БАЗАНУЛИ!")
-            st.markdown("""
-                <div style="display: flex; justify-content: center;">
-                    <img src="https://media1.tenor.com/m/wrD4OigGNPMAAAAd/shocked-computer.gif" width="400" style="border-radius: 15px;">
-                </div>
-            """, unsafe_allow_html=True)
-            st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
-            
-            # Кнопка, щоб закрити прикол (або почекати)
-            if st.button("Я більше так не буду (вибачитись)"):
-                st.session_state.show_troll = False
-                st.rerun()
-            
-            # Авто-закриття через 20 секунд без блокування
-            import time
-            if "troll_time" not in st.session_state:
-                st.session_state.troll_time = time.time()
-            
-            if time.time() - st.session_state.troll_time > 20:
-                st.session_state.show_troll = False
-                del st.session_state.troll_time
-                st.rerun()
+                    existing_low = [w.lower() for w in st.session_state.all_words]
+                    if word != "":
+                        if low_word in existing_low:
+                            st.session_state.msg_data = {"text": "Таке слово вже є, придумай ще щось!", "type": "error"}
+                        else:
+                            st.session_state.all_words.append(word)
+                            st.session_state.last_added_word = word
+                            st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слво!", "type": "success"}
+                            append_word_to_file(word)
+                        
+                        st.session_state.last_processed_input = new_word_raw
+                        st.rerun()
             
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
