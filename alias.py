@@ -331,7 +331,6 @@ elif st.session_state.game_state == "sync_lobby":
         st.session_state.old_players = current_players
 
         with st.sidebar:
-            st.header("🎮 Alias Sync")
             st.write(f"🏠 Код: **{st.session_state.room_id}**")
             st.write(f"👤 Ти: **{my_name}** {'(👑)' if is_host else ''}")
             st.divider()
@@ -375,7 +374,11 @@ elif st.session_state.game_state == "sync_lobby":
         st.info(f"📊 Раундів: {data.get('total_rounds', 3)} | ⏱ Час: {data.get('duration', 60)}с")
 
     if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
-        st.session_state.game_state = "setup"; st.rerun()
+        updated_players = [p for p in current_players if p != my_name]
+        ref.update({"players": updated_players})
+        del st.session_state.room_id
+        st.session_state.game_state = "mode_select"
+        st.rerun()
     
     time.sleep(2); st.rerun()
 
