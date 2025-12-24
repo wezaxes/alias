@@ -296,11 +296,19 @@ elif st.session_state.game_state == "setup":
                 st.rerun()
                 
     # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
+    # Спільне для обох режимів: додавання слів
+    st.divider()
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
-        new_word_raw = st.text_input("Введи слово:", key="input_field")
+        
+        # Поле вводу. Коли натиснеш Enter, значення запишеться в new_word_raw
+        new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
+        
+        # Кнопка залишається як альтернатива
+        add_button = st.button("ДОДАТИ В СЛОВНИК")
 
-        if st.button("ДОДАТИ В СЛОВНИК"):
+        # Логіка спрацьовує АБО якщо натиснули кнопку, АБО якщо в полі щось з'явилося після Enter
+        if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
             word = new_word_raw.strip().capitalize()
             low_word = word.lower()
             existing_low = [w.lower() for w in st.session_state.all_words]
@@ -313,8 +321,12 @@ elif st.session_state.game_state == "setup":
                     st.session_state.last_added_word = word
                     st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
                     append_word_to_file(word)
+                
+                # Запам'ятовуємо, що ми вже обробили цей ввід, щоб не додавати по колу
+                st.session_state.last_processed_input = new_word_raw
                 st.rerun()
 
+        # Вивід повідомлень (успіх/помилка)
         if st.session_state.msg_data["text"]:
             if st.session_state.msg_data["type"] == "success":
                 st.success(st.session_state.msg_data["text"])
@@ -323,8 +335,6 @@ elif st.session_state.game_state == "setup":
         
         if st.session_state.last_added_word:
             st.markdown(f"✅ Останнє додане слово: **{st.session_state.last_added_word}**")
-
-    st.divider()
     
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
