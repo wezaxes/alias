@@ -307,106 +307,18 @@ elif st.session_state.game_state == "setup":
         if st.session_state.last_added_word:
             st.markdown(f"✅ Останнє: **{st.session_state.last_added_word}**")
 
-# --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
-elif st.session_state.game_state == "sync_lobby":
-    ref = db.collection("rooms").document(st.session_state.room_id)
-    doc = ref.get()
-
-    if not doc.exists:
-        st.error("Кімнату не знайдено!")
-        st.session_state.game_state = "setup"
-        st.rerun()
-
-    data = doc.to_dict()
-
-    # ПЕРЕВІРКА: Якщо гра вже почалася — миттєво йдемо звідси
-    if data.get("state") == "playing":
-        st.session_state.game_state = "playing_sync"
-        st.rerun()
-
-    # Далі код виконується ТІЛЬКИ якщо ми в лобі
-    current_players = data.get("players", [])
-    my_name = st.session_state.my_name
-    is_host = (data.get("host") == my_name)
-
-    # --- СПОВІЩЕННЯ (Тоасти) ---
-    if "old_players" not in st.session_state:
-        st.session_state.old_players = current_players
-
-    for p in current_players:
-        if p not in st.session_state.old_players:
-            st.toast(f"✨ {p} приєднався до гри!")
-    for p in st.session_state.old_players:
-        if p not in current_players:
-            st.toast(f"🚪 {p} лівнув...")
-    st.session_state.old_players = current_players
-
-    # --- САЙДБАР ---
-    with st.sidebar:
-        st.write(f"🏠 Код: **{st.session_state.room_id}**")
-        st.write(f"👤 Ти: **{my_name}** {'(👑)' if is_host else ''}")
-        st.divider()
-        st.write("👥 Гравці:")
-        for p in current_players:
-            st.caption(f"• {p} {'(Хост)' if p == data.get('host') else ''}")
-
-        if st.button("🔴 ВИЙТИ З ГРИ", key="exit_btn_sidebar"):
-            updated_players = [p for p in current_players if p != my_name]
-            ref.update({"players": updated_players})
-            st.session_state.game_state = "mode_select"
-            st.rerun()
-
-    # --- ЕКРАН ЛОБІ ---
-    st.title(f"🏠 Кімната: {st.session_state.room_id}")
-    st.write("### Гравці в лобі:")
-    cols = st.columns(3)
-    for i, p in enumerate(current_players):
-        cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_btn_{i}")
-
-    st.divider()
-
-    if is_host:
-        st.subheader("👑 Ви Хост (Адмін)")
-        # Використовуємо value=... щоб значення підтягувалось з бази
-        h_rounds = st.number_input("Кількість раундів", 1, 20, value=int(data.get("total_rounds", 3)), key="h_r_input")
-        h_timer = st.slider("Секунди на хід", 10, 120, value=int(data.get("duration", 60)), key="h_t_input")
-
-        # Оновлення бази при зміні
-        if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
-            ref.update({"total_rounds": h_rounds, "duration": h_timer})
-
-        if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥", use_container_width=True):
-            ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": ""})
-            st.rerun()
-    else:
-        # ОСЬ ЦЕЙ БЛОК БІЛЬШЕ НЕ БУДЕ БЛИМАТИ НА ЕКРАНІ ГРИ
-        st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
-        st.info(f"📊 Раундів: {data.get('total_rounds', 3)} | ⏱ Час: {data.get('duration', 60)}с")
-
-    # Твоя кнопка виходу знизу
-    if st.button("🚪 ПОКИНУТИ КІМНАТУ", key="exit_bottom"):
-        updated_players = [p for p in current_players if p != my_name]
-        ref.update({"players": updated_players})
-        st.session_state.game_state = "mode_select"
-        st.rerun()
-
-    # Сон для синхронізації
-    time.sleep(2)
-    st.rerun()
-
-# --- ЗАГАЛЬНА ЛОГІКА ДЛЯ DISCORD (САЙДБАР, СПОВІЩЕННЯ ТА ЕКРАНИ) ---
-# --- САЙДБАР (З'ЯВЛЯЄТЬСЯ ВІДРАЗУ ПРИ НАЯВНОСТІ ROOM_ID) ---
+# --- 1. ЗАГАЛЬНА ЛОГІКА ТА САЙДБАР (Спільне для Лобі та Гри) ---
 if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby", "playing_sync"]:
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
-    
+
     if doc.exists:
         data = doc.to_dict()
         current_players = data.get("players", [])
         my_name = st.session_state.my_name
         is_host = (data.get("host") == my_name)
 
-        # Сповіщення (тоасти)
+        # Сповіщення (тоасти) — працюють всюди
         if "old_players" not in st.session_state:
             st.session_state.old_players = current_players
         for p in current_players:
@@ -417,6 +329,7 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
                 st.toast(f"🚪 {p} лівнув з катки...")
         st.session_state.old_players = current_players
 
+        # Малюємо сайдбар
         with st.sidebar:
             st.header("🎮 Alias Sync")
             st.write(f"🏠 Код: **{st.session_state.room_id}**")
@@ -424,221 +337,102 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
             st.divider()
             st.write("👥 Гравці:")
             for p in current_players:
-                st.caption(f"• {p} {'(Хост)' if p == data.get('host') else ''}")
-            
-            if st.button("🔴 ВИЙТИ З ГРИ", key="exit_btn"):
+                p_label = f"• {p}"
+                if p == data.get("host"): p_label += " 👑"
+                if p == my_name: p_label += " (ти)"
+                st.caption(p_label)
+
+            st.divider()
+            if st.button("🔴 ВИЙТИ З ГРИ", key="sidebar_exit_btn"):
                 updated_players = [p for p in current_players if p != my_name]
                 ref.update({"players": updated_players})
                 del st.session_state.room_id
                 st.session_state.game_state = "mode_select"
                 st.rerun()
 
-# --- ЕКРАНИ ЛОБІ ТА ГРИ ---
-if st.session_state.game_state == "sync_lobby":
-    # Перевіряємо, чи ми вже отримали дані в блоці сайдбару вище
-    ref = db.collection("rooms").document(st.session_state.room_id)
-    data = ref.get().to_dict()
+        # --- 2. ЕКРАН ЛОБІ ОЧІКУВАННЯ ---
+        if st.session_state.game_state == "sync_lobby":
+            # Якщо хост натиснув старт — миттєво перемикаємось
+            if data.get("state") == "playing":
+                st.session_state.game_state = "playing_sync"
+                st.rerun()
 
-    if data.get("state") == "playing":
-        st.session_state.game_state = "playing_sync"
-        st.rerun()
+            st.title(f"🏠 Кімната: {st.session_state.room_id}")
+            st.write("### Гравці в лобі:")
+            cols = st.columns(3)
+            for i, p in enumerate(current_players):
+                cols[i % 3].button(f"👤 {p}", disabled=True, key=f"lobby_p_{i}")
 
-    st.title("🏠 Лобі очікування")
+            st.divider()
+            if is_host:
+                st.subheader("👑 Налаштування раундів")
+                h_rounds = st.number_input("Раундів", 1, 20, value=int(data.get("total_rounds", 3)), key="host_r_input")
+                h_timer = st.slider("Час (сек)", 10, 120, value=int(data.get("duration", 60)), key="host_t_input")
 
-    # Вивід плиток гравців
-    cols = st.columns(3)
-    for i, p in enumerate(data.get("players", [])):
-        cols[i % 3].button(f"👤 {p}", disabled=True, key=f"l_p_{i}")
+                if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
+                    ref.update({"total_rounds": h_rounds, "duration": h_timer})
 
-    st.divider()
-    if is_host:
-        st.subheader("⚙️ Налаштування раундів")
-        # Встановлюємо значення прямо з бази, щоб не злітало
-        h_rounds = st.number_input("Раундів", 1, 20, value=int(data.get("total_rounds", 3)), key="host_r_input")
-        h_timer = st.slider("Час (сек)", 10, 120, value=int(data.get("duration", 60)), key="host_t_input")
-
-        # Оновлюємо БД тільки якщо значення реально змінилися (це фіксить "зліт")
-        if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
-            print(f"[UPDATE] Host changed settings: Rounds={h_rounds}, Time={h_timer}")
-            ref.update({"total_rounds": h_rounds, "duration": h_timer})
-
-        if st.button("ПОЧАТИ ГРУ 🔥", use_container_width=True):
-            print("[GAME] Host started the match!")
-            ref.update({"state": "playing", "current_round": 1})
-            st.rerun()
-    else:
-        st.info("🕒 Чекаємо, поки хост запустить гру...")
-        st.write(f"📊 Раундів: **{data.get('total_rounds')}** | ⏱ Час: **{data.get('duration')}с**")
-
-    time.sleep(2)
-    st.rerun()
-
-elif st.session_state.game_state == "playing_sync":
-    # 1. Отримуємо свіжі дані з бази
-    ref = db.collection("rooms").document(st.session_state.room_id)
-    doc = ref.get()
-    if not doc.exists:
-        st.session_state.game_state = "mode_select"
-        st.rerun()
-
-    data = doc.to_dict()
-    total_rounds = data.get("total_rounds", 3)
-    current_round = data.get("current_round", 1)
-    my_name = st.session_state.my_name
-    is_host = (data.get("host") == my_name)
-
-    # Лог у консоль PyCharm
-    print(f"[GAME LOG] Round: {current_round}/{total_rounds} | Explainer: {data.get('explainer')} | User: {my_name}")
-
-    # Перевірка на фінал гри
-    if current_round > total_rounds:
-        st.session_state.scores = data.get("scores", {})
-        st.session_state.game_state = "finished"
-        st.rerun()
-
-    # Стан 1: Очікування початку ходу (вибір пари)
-    if not data.get("explainer"):
-        st.title(f"Раунд {current_round} з {total_rounds}")
-
-        quotes = [
-            "💡 Порада: якщо не знаєш слова - кажи що всі інші безнадійні і теж не знають та скіпай!",
-            "💅 Факт: зі словника колись приберуть слово Імплікація. Чесно.",
-            "⏳ Очікуємо... Тим часом придумай, як пояснити слово 'Бебра'.",
-            "🚀 Шанс випадіння тупого слова сьогодні — 99%.",
-            "🎮 Ви вже намагались написати сюди слово хуй?",
-            "🎲 Натисни і дізнайся, що зламається цього разу.",
-            "🚨 Увага: можливий словесний понос.",
-            "🎤 Порада: пояснюй, ніби перед тобою пʼятирічна дитина.",
-            "🤝 Порада: команда не осудить. Максимум похіхікає.",
-            "🚨 Увага: можливі слова, які неможливо пояснити, імпровізуйте я хз.",
-            "🚨 Увага: наступне слово може викликати екзистенційну кризу у всієї команди.",
-            "🚨 Увага: шанс того, що ви зараз посваритесь через неправильну здогадку — 85%.",
-            "🚨 Увага: гра може викликати раптові напади сміху або бажання видалити цей код.",
-            "🚨 Увага: ми все ще не знаємо, як працює база даних, тому просто насолоджуйтесь моментом.",
-            "🚨 Увага: якщо партнер вас не розуміє, можливо, справа не в слові, а в партнері?",
-            "🚨 Увага: кожне пропущене слово робить хост-бота трохи сумнішим.",
-            "🚨 Увага: імпровізація — це ваш єдиний шанс вижити в цьому раунді.",
-            "🚨 Увага: цей напис тут просто щоб ви не бачили, яке складне слово зараз випаде.",
-            "🛸 Цей напис тут просто щоб ви не нудьгували, поки інші гравці нарешті зайдуть у лобі.",
-            "🛸 Цей напис тут просто щоб забити місце на екрані, поки сервер збирає ваші дані для оформлення кредиту.",
-            "🚨 Цей напис тут просто щоб забити місце на екрані, поки база даних намагається не впасти.",
-            "🛸 Цей напис тут просто щоб створити ілюзію активності, поки ви чекаєте на старт.",
-            "🛸 Цей напис тут просто щоб ви хоч щось читали, поки всі збираються з думками.",
-            "🛸 Цей напис тут просто щоб додати трохи загадковості перед початком гри.",
-            "🛸 Цей напис тут просто щоб ви не забули, як виглядає екран вашого телефону.",
-            "⚠️ Не оновлюй. Працює ж.",
-            "🤝 Якщо не вгадав слово, це не ти тупий - це пояснили хуйово.",
-            "⏳ Очікуємо... Тим часом придумай, як пояснити слово «шльоп».",
-            "⏳ Очікуємо... Поясни людині, що таке «кринжулька».",
-            "⏳ Очікуємо... Спробуй не засміятись, пояснюючи «бульк».",
-            "⏳ Очікуємо... Як би ти описав слово «хернячок»?",
-            "⏳ Очікуємо... Поясни «плюмп» без жестів. А, ні, з жестами можна.",
-            "⏳ Очікуємо... Ну давай, що таке «шмигдик»?",
-            "⏳ Очікуємо... Поясни «ляпця» так, щоб тебе зрозуміли.",
-            "⏳ Очікуємо... Слово «фігня» але ускладнений рівень.",
-            "⏳ Очікуємо... Як пояснити «бздик», якщо ти доросла людина?",
-            "⏳ Очікуємо... Спробуй логічно пояснити «хлюп».",
-            "⏳ Очікуємо... Поясни «квазіпук». Так, це слово.",
-            "⏳ Очікуємо... Ну що, як там з поясненням «шурушун»?",
-            "⏳ Очікуємо... Поясни «йойк». Без «ну типу».",
-            "⏳ Очікуємо... Слово «пукля». Удачі.",
-            "⏳ Очікуємо... Як би ти описав «мдааа»?",
-            "⏳ Очікуємо... Поясни «хихань». Не смійся.",
-            "⏳ Очікуємо... Спробуй пояснити «блінчик» без їжі.",
-            "📐 4(x - 5) = 3x - 6",
-            "📐 (a - 4)(a + 2) - (a - 1)²",
-            "📐 25x² - 16y²",
-            "📐 2x³ - 3x² + x, x = -1",
-            "📐 (x⁴)² * x³",
-            "📐 x + y = 5 та 2x - y = 1",
-            "📐 (-0,2)⁴ * 5⁴",
-            "📐 -3a²b * 4a³b⁴",
-            "📐 |x + 3| = 7",
-            "📐 ax + ay + 3x + 3y",
-            "📐 Кути рівнобедреного трикутника, вершина 40°",
-            "📐 (x - 3)(x + 3) = x² - 9",
-            "📐 (x + 2)/3 - (x - 1)/2 = 1",
-            "📐 (3m - n)² - (3m + n)²",
-            "📐 Графік функції y = 2x - 3",
-            "📐 2x² - 3x + 1 та x² + 3x - 4",
-            "😁 Ми теж не знаємо що таке Барбадос."
-        ]
-
-        st.info(random.choice(quotes))
-
-        if is_host:
-            if st.button("ПОЧАТИ ХІД 🎲", use_container_width=True):
-                current_players = data.get("players", [])
-                if len(current_players) >= 2:
-                    p1, p2 = random.sample(current_players, 2)
-                    print(f"[GAME] Host picked: {p1} explaining to {p2}")
-                    ref.update({
-                        "explainer": p1,
-                        "listener": p2,
-                        "word": random.choice(st.session_state.all_words),
-                        "t_end": time.time() + data.get("duration", 60)
-                    })
+                if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥", use_container_width=True):
+                    ref.update({"state": "playing", "current_round": 1})
                     st.rerun()
-                else:
-                    st.error("Для гри потрібно мінімум 2 гравці!")
-        else:
-            st.warning("⏳ Очікуємо, поки хост запустить наступний хід...")
+            else:
+                st.info("🕒 Чекаємо, поки хост запустить гру...")
+                st.write(f"📊 Раундів: **{data.get('total_rounds', 3)}** | ⏱ Час: **{data.get('duration', 60)}с**")
+
+            if st.button("🚪 ПОКИНУТИ КІМНАТУ", key="lobby_exit_bottom"):
+                updated_players = [p for p in current_players if p != my_name]
+                ref.update({"players": updated_players})
+                del st.session_state.room_id
+                st.session_state.game_state = "mode_select"
+                st.rerun()
+
             time.sleep(2)
             st.rerun()
 
-    # Стан 2: Активний хід (таймер і слова)
-    else:
-        rem = int(data["t_end"] - time.time())
+        # --- 3. ЕКРАН ПРОЦЕСУ ГРИ ---
+        elif st.session_state.game_state == "playing_sync":
+            total_rounds = data.get("total_rounds", 3)
+            current_round = data.get("current_round", 1)
 
-        if rem <= 0:
-            st.warning("⏰ Час вийшов!")
-            if is_host:
-                if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True):
-                    ref.update({
-                        "explainer": "",
-                        "listener": "",
-                        "word": "",
-                        "current_round": current_round + 1 if is_host else current_round
-                    })
-                    st.rerun()
-            else:
-                st.info("🕒 Очікуємо, поки хост переключить раунд...")
-                time.sleep(2)
+            print(f"[GAME LOG] Room: {st.session_state.room_id} | Round: {current_round}/{total_rounds}")
+
+            if current_round > total_rounds:
+                st.session_state.scores = data.get("scores", {})
+                st.session_state.game_state = "finished"
                 st.rerun()
-        else:
-            st.subheader(f"⏱ Залишилось: {rem} сек")
-            st.write(f"🎤 Пояснює: **{data['explainer']}** ➜ Слухає: **{data['listener']}**")
 
-            if my_name == data["explainer"]:
-                st.success("ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
-                st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
+            # --- ПІДСТАН 1: Очікування вибору пари ---
+            if not data.get("explainer"):
+                st.title(f"Раунд {current_round} з {total_rounds}")
 
-                c1, c2 = st.columns(2)
-                if c1.button("✅ ВГАДАНО", use_container_width=True):
-                    # Оновлюємо бали в базі
-                    new_scores = data.get("scores", {})
-                    new_scores[my_name] = new_scores.get(my_name, 0) + 1
-                    ref.update({
-                        "scores": new_scores,
-                        "word": random.choice(st.session_state.all_words)
-                    })
-                    st.rerun()
+                quotes = [
+                    "💡 Порада: якщо не знаєш слова - кажи що всі інші безнадійні і теж не знають та скіпай!",
+                    "💅 Факт: зі словника колись приберуть слово Імплікація. Чесно.",
+                    "⏳ Очікуємо... Тим часом придумай, як пояснити слово 'Бебра'.",
+                    "🚀 Шанс випадіння тупого слова сьогодні — 99%.",
+                    "🎲 Натисни і дізнайся, що зламається цього разу.",
+                    "🚨 Увага: можливий словесний понос.",
+                    "🎤 Порада: пояснюй, ніби перед тобою пʼятирічна дитина.",
+                    "🚨 Увага: наступне слово може викликати екзистенційну кризу у всієї команди.",
+                    "📐 4(x - 5) = 3x - 6", "📐 25x² - 16y²", "📐 |x + 3| = 7",
+                    "😁 Ми теж не знаємо що таке Барбадос."
+                ]
+                st.info(random.choice(quotes))
 
-                if c2.button("❌ ПРОПУСТИТИ", use_container_width=True):
-                    ref.update({"word": random.choice(st.session_state.all_words)})
-                    st.rerun()
-
-            elif my_name == data["listener"]:
-                st.warning("ТИ ВІДГАДУЄШ!")
-                st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
-
-            else:
-                st.info("Спостерігайте за грою інших...")
-                st.markdown(f'<div class="word-box" style="font-size: 24px;">{data["explainer"]} пояснює...</div>',
-                            unsafe_allow_html=True)
-
-            time.sleep(1)
-            st.rerun()
+                if is_host:
+                    if st.button("ПОЧАТИ ХІД 🎲", use_container_width=True):
+                        if len(current_players) >= 2:
+                            p1, p2 = random.sample(current_players, 2)
+                            ref.update({
+                                "explainer": p1, "listener": p2,
+                                "word": random.choice(st.session_state.all_words),
+                                "t_end": time.time() + data.get("duration", 60)
+                            })
+                            st.rerun()
+                        else:
+                            st.error("Потрібно мінімум 2 гравці!")
+                else:
+                    st
 # --- IRL РЕЖИМ ---
 elif st.session_state.game_state == "playing_irl":
     if st.session_state.current_round > st.session_state.total_rounds:
