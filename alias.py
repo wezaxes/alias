@@ -347,7 +347,8 @@ elif st.session_state.game_state == "sync_lobby":
     time.sleep(2); st.rerun()
 
 # --- ЗАГАЛЬНА ЛОГІКА ДЛЯ DISCORD (САЙДБАР, СПОВІЩЕННЯ ТА ЕКРАНИ) ---
-elif st.session_state.game_state in ["sync_lobby", "playing_sync"]:
+# --- САЙДБАР (З'ЯВЛЯЄТЬСЯ ВІДРАЗУ ПРИ НАЯВНОСТІ ROOM_ID) ---
+if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby", "playing_sync"]:
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
     
@@ -357,67 +358,77 @@ elif st.session_state.game_state in ["sync_lobby", "playing_sync"]:
         my_name = st.session_state.my_name
         is_host = (data.get("host") == my_name)
 
-        # --- ЛОГІКА СПОВІЩЕНЬ (Працює і в лобі, і в грі) ---
+        # Сповіщення (тоасти)
         if "old_players" not in st.session_state:
             st.session_state.old_players = current_players
-
         for p in current_players:
             if p not in st.session_state.old_players:
-                st.toast(f"✨ {p} приєднався до гри!")
+                st.toast(f"✨ {p} приєднався!")
         for p in st.session_state.old_players:
             if p not in current_players:
-                st.toast(f"🚪 {p} лівнув з катки...")
+                st.toast(f"🚪 {p} вийшов")
         st.session_state.old_players = current_players
 
-        # --- СПІЛЬНИЙ САЙДБАР ---
         with st.sidebar:
-            # st.write(f"👤 Ти: **{my_name}** {'(👑 Хост)' if is_host else ''}")
-            # st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+            st.header("🎮 Alias Sync")
+            st.write(f"🏠 Код: **{st.session_state.room_id}**")
+            st.write(f"👤 Ти: **{my_name}** {'(👑)' if is_host else ''}")
             st.divider()
-            st.write("👥 **Гравці в мережі:**")
+            st.write("👥 Гравці:")
             for p in current_players:
-                p_label = f"• {p}"
-                if p == data.get("host"): p_label += " 👑"
-                if p == my_name: p_label += " (ти)"
-                st.caption(p_label)
+                st.caption(f"• {p} {'(Хост)' if p == data.get('host') else ''}")
             
-            st.divider()
-            if st.button("🔴 ВИЙТИ"):
+            if st.button("🔴 ВИЙТИ З ГРИ", key="exit_btn"):
                 updated_players = [p for p in current_players if p != my_name]
                 ref.update({"players": updated_players})
-                st.session_state.game_state = "setup"
+                del st.session_state.room_id
+                st.session_state.game_state = "mode_select"
                 st.rerun()
 
-        # --- ЕКРАН 1: ЛОББІ ---
-        if st.session_state.game_state == "sync_lobby":
-            if data.get("state") == "playing":
-                st.session_state.game_state = "playing_sync"
-                st.rerun()
+# --- ЕКРАНИ ЛОБІ ТА ГРИ ---
+if st.session_state.game_state == "sync_lobby":
+    # Перевіряємо, чи ми вже отримали дані в блоці сайдбару вище
+    ref = db.collection("rooms").document(st.session_state.room_id)
+    data = ref.get().to_dict()
 
-            st.title(f"🏠 Кімната: {st.session_state.room_id}")
-            st.write("### Гравці в лобі:")
-            cols = st.columns(3)
-            for i, p in enumerate(current_players):
-                cols[i % 3].button(f"👤 {p}", disabled=True, key=f"lobby_btn_{p}_{i}")
-            
-            st.divider()
-            if is_host:
-                st.subheader("👑 Налаштування Хоста")
-                h_rounds = st.number_input("Кількість раундів", 1, 20, data.get("total_rounds", 3), key="host_r_input")
-                h_timer = st.slider("Секунди на хід", 10, 120, data.get("duration", 60), key="host_t_input")
-                
-                if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
-                    ref.update({"total_rounds": h_rounds, "duration": h_timer})
-                
-                if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥"):
-                    ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": ""})
-                    st.rerun()
-            else:
-                st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
-                st.info(f"📊 Раундів: {data.get('total_rounds', 3)} | ⏱ Час: {data.get('duration', 60)}с")
-            
-            time.sleep(2)
+    if data.get("state") == "playing":
+        st.session_state.game_state = "playing_sync"
+        st.rerun()
+
+    st.title("🏠 Лобі очікування")
+    
+    # Вивід плиток гравців
+    cols = st.columns(3)
+    for i, p in enumerate(data.get("players", [])):
+        cols[i % 3].button(f"👤 {p}", disabled=True, key=f"l_p_{i}")
+
+    st.divider()
+    if is_host:
+        st.subheader("⚙️ Налаштування раундів")
+        # Встановлюємо значення прямо з бази, щоб не злітало
+        h_rounds = st.number_input("Раундів", 1, 20, value=int(data.get("total_rounds", 3)), key="host_r_input")
+        h_timer = st.slider("Час (сек)", 10, 120, value=int(data.get("duration", 60)), key="host_t_input")
+        
+        # Оновлюємо БД тільки якщо значення реально змінилися (це фіксить "зліт")
+        if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
+            print(f"[UPDATE] Host changed settings: Rounds={h_rounds}, Time={h_timer}")
+            ref.update({"total_rounds": h_rounds, "duration": h_timer})
+        
+        if st.button("ПОЧАТИ ГРУ 🔥", use_container_width=True):
+            print("[GAME] Host started the match!")
+            ref.update({"state": "playing", "current_round": 1})
             st.rerun()
+    else:
+        st.info("🕒 Чекаємо, поки хост запустить гру...")
+        st.write(f"📊 Раундів: **{data.get('total_rounds')}** | ⏱ Час: **{data.get('duration')}с**")
+
+    time.sleep(2)
+    st.rerun()
+
+elif st.session_state.game_state == "playing_sync":
+    # Тут твій блок гри (залишай як був, але переконайся, що він бачить data)
+    ref = db.collection("rooms").document(st.session_state.room_id)
+    data = ref.get().to_dict()
 
         # --- ЕКРАН 2: ГРА ---
         elif st.session_state.game_state == "playing_sync":
