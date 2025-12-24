@@ -311,6 +311,18 @@ elif st.session_state.game_state == "setup":
         if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
             word = new_word_raw.strip().capitalize()
             low_word = word.lower()
+            
+            # --- ПЕРСОНАЛЬНИЙ ПРИКОЛ НА "ХУЙ" ---
+            if low_word == "хуй":
+                st.session_state.msg_data = {"text": "🚨 СИСТЕМА ЗАБЛОКОВАНА ЧЕРЕЗ КРИТИЧНИЙ РІВЕНЬ БАЗИ", "type": "error"}
+                
+                # Виводимо кота
+                st.image("https://media.Selection.com/static/v1/56c666504a984a86b976798a/56c666504a984a86b976798b/1455843477464/Cat_Judgment.jpg", caption="МИ НЕ ПРИДУМАЛИ НІЧОГО СМІШНОГО НА СЛОВО ХУЙ ТОМУ ЧКАЄМО ВАШІ ВАРІАНТИ.")    
+                st.session_state.last_processed_input = new_word_raw
+                # Не робимо rerun одразу, щоб людина встигла побачити кота
+                st.stop() 
+            # -----------------------------------
+
             existing_low = [w.lower() for w in st.session_state.all_words]
 
             if word != "":
@@ -322,19 +334,8 @@ elif st.session_state.game_state == "setup":
                     st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
                     append_word_to_file(word)
                 
-                # Запам'ятовуємо, що ми вже обробили цей ввід, щоб не додавати по колу
                 st.session_state.last_processed_input = new_word_raw
                 st.rerun()
-
-        # Вивід повідомлень (успіх/помилка)
-        if st.session_state.msg_data["text"]:
-            if st.session_state.msg_data["type"] == "success":
-                st.success(st.session_state.msg_data["text"])
-            else:
-                st.error(st.session_state.msg_data["text"])
-        
-        if st.session_state.last_added_word:
-            st.markdown(f"✅ Останнє додане слово: **{st.session_state.last_added_word}**")
     
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
