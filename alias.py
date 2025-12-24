@@ -455,6 +455,47 @@ if 'room_id' in st.session_state and st.session_state.game_state == "playing_syn
                 st.session_state.game_state = "mode_select"
                 st.rerun()
 
+# --- ЕКРАНИ ЛОБІ ТА ГРИ ---
+if st.session_state.game_state == "sync_lobby":
+    # Перевіряємо, чи ми вже отримали дані в блоці сайдбару вище
+    ref = db.collection("rooms").document(st.session_state.room_id)
+    data = ref.get().to_dict()
+
+    if data.get("state") == "playing":
+        st.session_state.game_state = "playing_sync"
+        st.rerun()
+
+    st.title("🏠 Лобі очікування")
+
+    # Вивід плиток гравців
+    cols = st.columns(3)
+    for i, p in enumerate(data.get("players", [])):
+        cols[i % 3].button(f"👤 {p}", disabled=True, key=f"l_p_{i}")
+
+    st.divider()
+    if is_host:
+        st.subheader("⚙️ Налаштування раундів")
+        # Встановлюємо значення прямо з бази, щоб не злітало
+        h_rounds = st.number_input("Раундів", 1, 20, value=int(data.get("total_rounds", 3)), key="host_r_input")
+        h_timer = st.slider("Час (сек)", 10, 120, value=int(data.get("duration", 60)), key="host_t_input")
+
+        # Оновлюємо БД тільки якщо значення реально змінилися (це фіксить "зліт")
+        if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
+            print(f"[UPDATE] Host changed settings: Rounds={h_rounds}, Time={h_timer}")
+            ref.update({"total_rounds": h_rounds, "duration": h_timer})
+
+        if st.button("ПОЧАТИ ГРУ 🔥", use_container_width=True):
+            print("[GAME] Host started the match!")
+            ref.update({"state": "playing", "current_round": 1})
+            st.rerun()
+    else:
+        st.info("🕒 Чекаємо, поки хост запустить гру...")
+        st.write(f"📊 Раундів: **{data.get('total_rounds')}** | ⏱ Час: **{data.get('duration')}с**")
+
+    time.sleep(2)
+    st.rerun()
+
+
 elif st.session_state.game_state == "playing_sync":
     # 1. Отримуємо свіжі дані з бази
     ref = db.collection("rooms").document(st.session_state.room_id)
