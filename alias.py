@@ -3,6 +3,7 @@ import random
 import time
 import os
 import json
+import string
 from google.cloud import firestore
 from google.oauth2 import service_account
 
@@ -68,27 +69,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Отдельный код по кнпки
 st.markdown("""
     <style>
     div[data-testid="stVerticalBlock"] > div.stElementContainer {
         width: 100%;
         margin-bottom: 10px;
     }
-
     div.stButton {
         width: 100%;
         display: flex;  
         justify-content: center;
     }
-
     div.stButton > button {
         width: 100%;
     }     
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. БАЗА ДАНИХ ТА ФАЙЛИ ---
+# --- ДОПОМІЖНІ ФУНКЦІЇ ---
+def generate_room_code():
+    letters = ''.join(random.choices(string.ascii_uppercase, k=4))
+    digits = ''.join(random.choices(string.digits, k=2))
+    code_list = list(letters + digits)
+    random.shuffle(code_list)
+    return ''.join(code_list)
+
 @st.cache_resource
 def get_db():
     try:
@@ -132,7 +137,7 @@ if 'game_state' not in st.session_state:
     st.session_state.current_player_idx = 0
     st.session_state.current_round = 1
 
-# Кнопка "Запропонувати ідею" в сайдбарі (буде всюди, де є сайдбар)
+# Сайдбар
 with st.sidebar:
     st.markdown("---")
     st.markdown("### 💡 Маєш ідею або щось зламалось?")
@@ -165,78 +170,38 @@ if st.session_state.game_state == "welcome":
 
 elif st.session_state.game_state == "tutorial":
     st.title("📖 Куди жмать? (методичка)")
-    
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("""
-        ### 🏠 Режим IRL
-        **Для тих, хто в одній кімнаті:**
-        * Один телефон на всіх.
-        * Передаєте мобілу тому, чия черга.
-        * Тиснете **"Я готовий"** і вперед!
-        """)
+        st.markdown("### 🏠 Режим IRL\n**Для тих, хто в одній кімнаті:**\n* Один телефон на всіх.\n* Передаєте мобілу тому, чия черга.\n* Тиснете **'Я готовий'** і вперед!")
     with col2:
-        st.markdown("""
-        ### 🎙️ DISCORD
-        **Для гри на відстані:**
-        * Кожен заходить зі свого девайсу.
-        * Один створює кімнату (Начальнік), інші вводять код.
-        * Система сама каже, хто пояснює.
-        """)
+        st.markdown("### 🎙️ DISCORD\n**Для гри на відстані:**\n* Кожен заходить зі свого девайсу.\n* Один створює кімнату (Начальнік), інші вводять код.\n* Система сама каже, хто пояснює.")
     
     st.info("💡 **Головне правило:** Пояснюй як хочеш, але не називай саме слово або спільнокореневі.")
-    st.markdown("---")
-    st.write("✅ **Вгадано** — бал команді. | ❌ **Скіп** — нове слово.")
-    st.write("➕ У налаштуваннях можна додати свої слова! (ми ще не знаємо як вони зберігаються, але обов'язково розберемося з цим колись) p.s: при натисканні на IRL і/або Discord вас флешне, будьте готові)))")
-    
+    st.write("➕ У налаштуваннях можна додати свої слова! p.s: при натисканні вас флешне, будьте готові)))")
     if st.button("ЗРОЗУМІВ, ПОГНАЛИ! 🚀"):
         st.session_state.game_state = "mode_select"
         st.rerun()
 
 elif st.session_state.game_state == "mode_select":
     st.title("🕹️ Оберіть режим гри")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.markdown(f"""
-            <a href="/?mode=irl" target="_self" style="text-decoration: none;">
-                <div class="mode-selection">
-                    <h3>🏠 IRL</h3>
-                    <p>Командна гра вживу</p>
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-            
+        st.markdown('<a href="/?mode=irl" target="_self" style="text-decoration: none;"><div class="mode-selection"><h3>🏠 IRL</h3><p>Командна гра вживу</p></div></a>', unsafe_allow_html=True)
     with col2:
-        st.markdown(f"""
-            <a href="/?mode=discord" target="_self" style="text-decoration: none;">
-                <div class="mode-selection">
-                    <h3>🎙️ DISCORD</h3>
-                    <p>Грайте разом онлайн</p>
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-
-    # Додаємо відступ та маленьку кнопку внизу
-    st.write("") 
-    st.divider()
+        st.markdown('<a href="/?mode=discord" target="_self" style="text-decoration: none;"><div class="mode-selection"><h3>🎙️ DISCORD</h3><p>Грайте разом онлайн</p></div></a>', unsafe_allow_html=True)
     
-    # Використовуємо колонки, щоб зробити кнопку маленькою (по центру)
+    st.divider()
     _, btn_col, _ = st.columns([1, 2, 1])
     with btn_col:
         if st.button("❓ Я ЗАБУВ ЯК РУЛИТЬ", use_container_width=True):
-            st.session_state.game_state = "tutorial"
-            st.rerun()
+            st.session_state.game_state = "tutorial"; st.rerun()
 
 elif st.session_state.game_state == "setup":
     if st.button("⬅️ НАЗАД"):
-        st.session_state.game_state = "mode_select"
-        st.rerun()
-    
+        st.session_state.game_state = "mode_select"; st.rerun()
     st.title("⚙️ Налаштування")
     
-    # --- ДОДАВАННЯ СЛІВ ---
+    # --- ТВОЄ ОРИГІНАЛЬНЕ ДОДАВАННЯ СЛІВ ---
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         new_word_raw = st.text_input("Введи слово:", key="input_field")
@@ -267,41 +232,48 @@ elif st.session_state.game_state == "setup":
 
     st.divider()
     
-    # --- ЛОГІКА DISCORD ---
+    # --- ЛОГІКА DISCORD (Оновлена з генератором та валідацією коду) ---
     if st.session_state.game_mode == "discord":
-        room_id = st.text_input("Код кімнати (наприклад: 7777):", value=" ").upper()
         my_name = st.text_input("Твій нікнейм:")
         
-        if st.button("ВХІД У КІМНАТУ 🔥"):
-            if not room_id or not my_name:
-                st.error("Введи код і нік!")
-            else:
-                st.session_state.room_id = room_id
-                st.session_state.my_name = my_name
-                if db:
-                    ref = db.collection("rooms").document(room_id)
-                    doc = ref.get()
-                    
-                    if not doc.exists or doc.to_dict().get("state") == "finished":
-                        ref.set({
-                            "host": my_name,
-                            "players": [my_name],
-                            "scores": {my_name: 0},
-                            "state": "lobby",
-                            "total_rounds": 3,
-                            "duration": 60,
-                            "current_round": 1,
+        c_h, c_j = st.columns(2)
+        with c_h:
+            st.write("Ти хост?")
+            if st.button("СТВОРИТИ КІМНАТУ ✨"):
+                if my_name:
+                    r_id = generate_room_code()
+                    st.session_state.room_id = r_id
+                    st.session_state.my_name = my_name
+                    if db:
+                        db.collection("rooms").document(r_id).set({
+                            "host": my_name, "players": [my_name], "scores": {my_name: 0},
+                            "state": "lobby", "total_rounds": 3, "duration": 60, "current_round": 1,
                             "explainer": "", "listener": "", "word": ""
                         })
-                    else:
-                        data = doc.to_dict()
-                        if my_name not in data["players"]:
-                            data["players"].append(my_name)
-                            data["scores"][my_name] = 0
-                            ref.update({"players": data["players"], "scores": data["scores"]})
-                    
-                    st.session_state.game_state = "sync_lobby"
-                    st.rerun()
+                        st.session_state.game_state = "sync_lobby"; st.rerun()
+                else: st.error("Введи нікнейм!")
+
+        with c_j:
+            st.write("Маєш код?")
+            enter_code = st.text_input("Введи код:", key="join_input").upper().strip()
+            if st.button("УВІЙТИ 🚪"):
+                if not my_name or not enter_code:
+                    st.error("Введи дані!")
+                else:
+                    if db:
+                        ref = db.collection("rooms").document(enter_code)
+                        doc = ref.get()
+                        if doc.exists:
+                            data = doc.to_dict()
+                            st.session_state.room_id = enter_code
+                            st.session_state.my_name = my_name
+                            if my_name not in data["players"]:
+                                data["players"].append(my_name)
+                                data["scores"][my_name] = 0
+                                ref.update({"players": data["players"], "scores": data["scores"]})
+                            st.session_state.game_state = "sync_lobby"; st.rerun()
+                        else:
+                            st.error("❌ Кімнату з таким кодом не знайдено!")
 
     # --- ЛОГІКА IRL ---
     elif st.session_state.game_mode == "irl":
@@ -311,33 +283,24 @@ elif st.session_state.game_state == "setup":
         timer = st.slider("Секунди на хід", 10, 120, 60)
         
         if st.button("🔥 ПОЧАТИ ГРУ"):
-            if len(names) < 2:
-                st.error("Для гри треба хоча б двоє!")
+            if len(names) < 2: st.error("Для гри треба хоча б двоє!")
             else:
-                st.session_state.players = names
-                st.session_state.scores = {n: 0 for n in names}
-                st.session_state.total_rounds = rounds
-                st.session_state.duration = timer
-                st.session_state.current_player_idx = 0
-                st.session_state.current_round = 1
-                st.session_state.game_state = "playing_irl"
-                st.rerun()
+                st.session_state.players = names; st.session_state.scores = {n: 0 for n in names}
+                st.session_state.total_rounds = rounds; st.session_state.duration = timer
+                st.session_state.current_player_idx = 0; st.session_state.current_round = 1
+                st.session_state.game_state = "playing_irl"; st.rerun()
 
 # --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
 elif st.session_state.game_state == "sync_lobby":
     st.title(f"🏠 Кімната: {st.session_state.room_id}")
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
-    
     if not doc.exists:
-        st.error("Кімнату не знайдено!")
-        st.session_state.game_state = "setup"; st.rerun()
-        
-    data = doc.to_dict()
+        st.error("Кімнату не знайдено!"); st.session_state.game_state = "setup"; st.rerun()
     
+    data = doc.to_dict()
     if data.get("state") == "playing":
-        st.session_state.game_state = "playing_sync"
-        st.rerun()
+        st.session_state.game_state = "playing_sync"; st.rerun()
 
     st.write("### Гравці в лобі:")
     cols = st.columns(3)
@@ -345,90 +308,50 @@ elif st.session_state.game_state == "sync_lobby":
         cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_{i}")
     
     st.divider()
-    
     is_host = (data.get("host") == st.session_state.my_name)
     
     if is_host:
         st.subheader("👑 Ви Хост (Адмін)")
-        st.write("Тільки ви бачите ці налаштування, розбирайтеся:")
-        
         h_rounds = st.number_input("Кількість раундів", 1, 20, data.get("total_rounds", 3))
         h_timer = st.slider("Секунди на хід", 10, 120, data.get("duration", 60))
-        
         if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
-            ref.update({
-                "total_rounds": h_rounds,
-                "duration": h_timer
-            })
+            ref.update({"total_rounds": h_rounds, "duration": h_timer})
         
         if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥"):
-            ref.update({
-                "state": "playing",
-                "total_rounds": h_rounds,
-                "duration": h_timer,
-                "current_round": 1,
-                "explainer": "", 
-                "listener": ""
-            })
+            ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": ""})
             st.rerun()
     else:
         st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
-        current_r = data.get('total_rounds', 3)
-        current_t = data.get('duration', 60)
-        
-        st.markdown(f"""
-            <div style="background-color: #313244; padding: 20px; border-radius: 15px; border: 1px solid #fab387;">
-                <p style="margin: 0; color: #cdd6f4;">Налаштування від хоста:</p>
-                <h3 style="margin: 10px 0; color: #fab387;">📊 Раундів: {current_r} | ⏱ Час: {current_t}с</h3>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info(f"📊 Раундів: {data.get('total_rounds', 3)} | ⏱ Час: {data.get('duration', 60)}с")
 
     if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
-        st.session_state.game_state = "setup"
-        st.rerun()
+        st.session_state.game_state = "setup"; st.rerun()
     
-    time.sleep(2)
-    st.rerun()
+    time.sleep(2); st.rerun()
 
 # --- ГРА (DISCORD SYNC) ---
 elif st.session_state.game_state == "playing_sync":
-    with st.sidebar:
-        st.write(f"👤 Ти: **{st.session_state.my_name}**")
-        st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
-        st.divider()
-        
-        # Відображення всіх гравців
-        st.write("👥 **Гравці в мережі:**")
-        players_list = data.get("players", [])
-        for p in players_list:
-            # Можна додати корону хосту або позначити себе
-            label = f"{p} (ти)" if p == st.session_state.my_name else p
-            st.caption(f"• {label}")
-            
-        st.divider()
-        if st.button("🔴 ВИЙТИ ДО НАЛАШТУВАНЬ"):
-            st.session_state.game_state = "setup"
-            st.session_state.game_mode = "discord"
-            st.rerun()
-
     ref = db.collection("rooms").document(st.session_state.room_id)
     doc = ref.get()
-    
     if not doc.exists:
-        st.error("Кімнату втрачено!")
-        st.session_state.game_state = "mode_select"
-        st.rerun()
+        st.session_state.game_state = "mode_select"; st.rerun()
     
     data = doc.to_dict()
     my_name = st.session_state.my_name
 
-    total_rounds = data.get("total_rounds", st.session_state.get("total_rounds", 3))
-    turn_duration = data.get("duration", st.session_state.get("duration", 60))
+    with st.sidebar:
+        st.write(f"👤 Ти: **{my_name}**")
+        st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+        st.divider()
+        st.write("👥 **Гравці в мережі:**")
+        for p in data.get("players", []):
+            st.caption(f"• {p} {'(ти)' if p == my_name else ''}")
+        if st.button("🔴 ВИЙТИ"):
+            st.session_state.game_state = "setup"; st.rerun()
 
+    total_rounds = data.get("total_rounds", 3)
     if data.get("current_round", 1) > total_rounds:
-        st.session_state.scores = data["scores"]
-        st.session_state.game_state = "finished"
-        st.rerun()
+        st.session_state.scores = data["scores"]; st.session_state.game_state = "finished"; st.rerun()
 
     if not data.get("explainer"):
         st.title(f"Раунд {data.get('current_round', 1)} з {total_rounds}")
@@ -437,138 +360,73 @@ elif st.session_state.game_state == "playing_sync":
             "💅 Факт: цей код писала жінка, тому він такий гарний.",
             "⏳ Очікуємо... Тим часом придумай, як пояснити слово 'Бебра'.",
             "🚀 Шанс випадіння тупого слова сьогодні — 99%.",
-            "🦖 Обережно: занадто довге думання викликає тільт у тіммейтів.",
             "🎮 Ви вже намагались написати сюди слово хуй?"
         ]
         st.info(random.choice(quotes)) 
-        
         if st.button("ЗГЕНЕРУВАТИ ПАРУ 🎲"):
             players = data["players"]
-            if len(players) < 2:
-                st.error("Треба мінімум 2 гравці!")
-            else:
-                last_explainer = data.get("explainer", "")
-                if len(players) == 2:
-                    if last_explainer in players:
-                        p1 = [p for p in players if p != last_explainer][0]
-                        p2 = [p for p in players if p == last_explainer][0]
-                    else:
-                        p1, p2 = random.sample(players, 2)
-                else:
-                    p1, p2 = random.sample(players, 2)
-                
+            if len(players) >= 2:
+                p1, p2 = random.sample(players, 2)
                 ref.update({
-                    "explainer": p1, 
-                    "listener": p2, 
+                    "explainer": p1, "listener": p2, 
                     "word": random.choice(st.session_state.all_words), 
-                    "t_end": time.time() + turn_duration,
-                    "total_rounds": total_rounds,
-                    "duration": turn_duration
+                    "t_end": time.time() + data.get("duration", 60)
                 })
                 st.rerun()
     else:
         rem = int(data["t_end"] - time.time())
         if rem <= 0:
             st.warning("Час вийшов!")
-            if st.button("Наступний раунд/пара"):
-                new_round = data.get("current_round", 1) + 1
-                ref.update({"explainer": "", "listener": "", "word": "", "current_round": new_round})
+            if st.button("Наступна пара"):
+                ref.update({"explainer": "", "listener": "", "word": "", "current_round": data.get("current_round", 1) + 1})
                 st.rerun()
         else:
             st.subheader(f"⏱ {rem} сек | {data['explainer']} ➜ {data['listener']}")
             if my_name == data["explainer"]:
                 st.success("ТИ ПОЯСНЮЄШ!")
-                word_to_show = data["word"].upper()
-                diff_emoji = "🔴" if len(word_to_show) > 8 else "🟢"
-                st.markdown(f'<div class="word-box">{diff_emoji} {word_to_show}</div>', unsafe_allow_html=True)
-                
+                st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("✅ ВГАДАНО"):
                     data["scores"][my_name] = data["scores"].get(my_name, 0) + 1
                     ref.update({"scores": data["scores"], "word": random.choice(st.session_state.all_words)})
                     st.rerun()
                 if c2.button("❌ СКІП"):
-                    ref.update({"word": random.choice(st.session_state.all_words)})
-                    st.rerun()
+                    ref.update({"word": random.choice(st.session_state.all_words)}); st.rerun()
             elif my_name == data["listener"]:
-                st.warning("ТИ ВІДГАДУЄШ!")
-                st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
-            else:
-                st.info(f"Ти поки що глядач. Грають {data['explainer']} та {data['listener']}")
-        time.sleep(1)
-        st.rerun()
+                st.warning("ТИ ВІДГАДУЄШ!"); st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
+            else: st.info(f"Грають {data['explainer']} та {data['listener']}")
+        time.sleep(1); st.rerun()
 
-# --- СТАРИЙ IRL РЕЖИМ ---
+# --- IRL РЕЖИМ ---
 elif st.session_state.game_state == "playing_irl":
-    with st.sidebar:
-        st.markdown("### 📊 Рахунок команд")
-        for player, score in st.session_state.scores.items():
-            st.write(f"{player}: **{score}** ⭐")
-        st.divider()
-        if st.button("🔴 ВИЙТИ ДО НАЛАШТУВАНЬ"):
-            st.session_state.game_state = "setup"
-            st.session_state.game_mode = "irl"
-            st.rerun()
-
-    if st.session_state.current_round > st.session_state.total_rounds:
-        st.session_state.game_state = "finished"
-        st.rerun()
-
     active = st.session_state.players[st.session_state.current_player_idx]
-    
     if 'turn_active' not in st.session_state or not st.session_state.turn_active:
         st.title(f"Раунд {st.session_state.current_round} з {st.session_state.total_rounds}")
         st.subheader(f"Черга: {active}")
-        tips = ["Готуйся, зараз буде щось крінжове... 🤡", "Дивись у вічі тіммейту! 👀"]
-        st.warning(random.choice(tips))
         if st.button("Я ГОТОВИЙ! ▶️"):
             st.session_state.turn_active = True
             st.session_state.start_time = time.time()
-            st.session_state.current_word = random.choice(st.session_state.all_words)
-            st.rerun()
+            st.session_state.current_word = random.choice(st.session_state.all_words); st.rerun()
     else:
         rem = int(st.session_state.duration - (time.time() - st.session_state.start_time))
         if rem <= 0:
             st.session_state.turn_active = False
-            st.session_state.current_player_idx += 1
-            if st.session_state.current_player_idx >= len(st.session_state.players):
-                st.session_state.current_player_idx = 0
-                st.session_state.current_round += 1
+            st.session_state.current_player_idx = (st.session_state.current_player_idx + 1) % len(st.session_state.players)
+            if st.session_state.current_player_idx == 0: st.session_state.current_round += 1
             st.rerun()
-
-        st.subheader(f"⏱ {rem} сек | {active}: {st.session_state.scores[active]} ⭐")
-        word_to_show = st.session_state.current_word.upper()
-        diff_emoji = "🔴" if len(word_to_show) > 8 else "🟢"
-        st.markdown(f'<div class="word-box">{diff_emoji} {word_to_show}</div>', unsafe_allow_html=True)
-        
+        st.subheader(f"⏱ {rem} сек | {active}")
+        st.markdown(f'<div class="word-box">{st.session_state.current_word.upper()}</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         if c1.button("✅ ВГАДАНО"):
-            st.session_state.scores[active] += 1
-            st.session_state.current_word = random.choice(st.session_state.all_words)
-            st.rerun()
+            st.session_state.scores[active] += 1; st.session_state.current_word = random.choice(st.session_state.all_words); st.rerun()
         if c2.button("❌ СКІП"):
-            st.session_state.current_word = random.choice(st.session_state.all_words)
-            st.rerun()
-        time.sleep(0.1)
-        st.rerun()
+            st.session_state.current_word = random.choice(st.session_state.all_words); st.rerun()
+        time.sleep(0.1); st.rerun()
 
 # --- ФІНАЛ ---
 elif st.session_state.game_state == "finished":
-    st.balloons()
-    st.title("🏆 ТАБЛИЦЯ РЕЗУЛЬТАТІВ")
-    sorted_scores = sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True)
-    for n, s in sorted_scores:
+    st.balloons(); st.title("🏆 РЕЗУЛЬТАТИ")
+    for n, s in sorted(st.session_state.scores.items(), key=lambda x: x[1], reverse=True):
         st.write(f"### {n}: {s} балів")
-    st.divider()
-    
-    st.write("🤖 **Маєш ідеї для нових слів чи режимів?**")
-    st.link_button("ЗАПРОПОНУВАТИ ІДЕЮ В ТГ 🚀", "https://t.me/wezaxes") 
-    
     if st.button("В ГОЛОВНЕ МЕНЮ 🔄"):
-        if db and hasattr(st.session_state, 'room_id'):
-            db.collection("rooms").document(st.session_state.room_id).update({"state": "finished"})
-            
-        st.session_state.game_state = "mode_select"
-        st.session_state.current_player_idx = 0
-        st.session_state.current_round = 1
-        st.rerun()
+        st.session_state.game_state = "mode_select"; st.rerun()
