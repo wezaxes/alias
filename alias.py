@@ -327,7 +327,9 @@ elif st.session_state.game_state == "setup":
                 st.markdown("<h2 style='text-align: center; color: #f38ba8;'>Ви внатурі думали шо слова ХУЙ тут не буде?</h2>", unsafe_allow_html=True)
                 
                 st.session_state.last_processed_input = new_word_raw
-                st.stop() 
+                import time
+                time.sleep(20)
+                st.rerun() 
             # -----------------------------------
 
             existing_low = [w.lower() for w in st.session_state.all_words]
