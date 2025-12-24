@@ -301,30 +301,45 @@ elif st.session_state.game_state == "setup":
     with st.expander("➕ Додати своє слово"):
         st.info(f"Зараз у словнику слів: {len(st.session_state.all_words)}")
         
-        # Поле вводу. Коли натиснеш Enter, значення запишеться в new_word_raw
+        # Поле вводу
         new_word_raw = st.text_input("Введи слово і натисни Enter:", key="input_field")
-        
-        # Кнопка залишається як альтернатива
         add_button = st.button("ДОДАТИ В СЛОВНИК")
 
-        # Логіка спрацьовує АБО якщо натиснули кнопку, АБО якщо в полі щось з'явилося після Enter
+        # Обробка натискання
         if add_button or (new_word_raw and new_word_raw != st.session_state.get('last_processed_input', '')):
             word = new_word_raw.strip().capitalize()
             low_word = word.lower()
             existing_low = [w.lower() for w in st.session_state.all_words]
 
             if word != "":
+                # Якщо слово вже є в базі
                 if low_word in existing_low:
-                    st.session_state.msg_data = {"text": "Таке слово вже є, давай придумаємо щось прикольніше", "type": "error"}
+                    # Перевіряємо: якщо це НЕ те саме слово, що ми щойно успішно додали — показуємо помилку
+                    if word != st.session_state.get('last_added_word'):
+                        st.session_state.msg_data = {"text": "Таке слово вже є, думай!", "type": "error"}
+                    else:
+                        # Якщо це те саме слово, просто ігноруємо (щоб не збивати успіх)
+                        pass
                 else:
+                    # Якщо слова немає — додаємо
                     st.session_state.all_words.append(word)
                     st.session_state.last_added_word = word
-                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово, дякую!", "type": "success"}
+                    st.session_state.msg_data = {"text": "Вітаю, ви придумали нове прикольне слово!", "type": "success"}
                     append_word_to_file(word)
                 
-                # Запам'ятовуємо, що ми вже обробили цей ввід, щоб не додавати по колу
+                # Фіксуємо ввід і перезавантажуємо
                 st.session_state.last_processed_input = new_word_raw
                 st.rerun()
+
+        # --- ВИВІД ПОВІДОМЛЕНЬ ---
+        if st.session_state.msg_data["text"]:
+            if st.session_state.msg_data["type"] == "success":
+                st.success(st.session_state.msg_data["text"])
+            else:
+                st.error(st.session_state.msg_data["text"])
+        
+        if st.session_state.last_added_word:
+            st.markdown(f"✅ Останнє додане слово: **{st.session_state.last_added_word}**")
 
         # Вивід повідомлень (успіх/помилка)
         if st.session_state.msg_data["text"]:
