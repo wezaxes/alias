@@ -203,7 +203,7 @@ elif st.session_state.game_state == "setup":
     st.markdown("### ⚙️ Налаштування")
     
     # 1. Нікнейм по центру
-    my_name = st.text_input("Твій нікнейм:", placeholder="Введи своє ім'я...")
+    my_name = st.text_input("Твій нікнейм:", placeholder="Введи шось прикольне...")
     st.divider()
 
     # 2. Дві колонки для Хоста та Гостя
@@ -212,7 +212,7 @@ elif st.session_state.game_state == "setup":
     with col1:
         st.markdown("<p style='text-align: center; font-weight: bold;'>Ти хостити будеш?</p>", unsafe_allow_html=True)
         # Додаємо порожній простір, щоб кнопка була на одному рівні з нижньою кнопкою входу
-        st.markdown("<div style='height: 48px;'></div>", unsafe_allow_html=True) 
+        st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True) 
         if st.button("СТВОРИТИ КІМНАТУ ✨"):
             if my_name:
                 r_id = generate_room_code()
