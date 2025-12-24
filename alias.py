@@ -450,57 +450,63 @@ if 'room_id' in st.session_state and st.session_state.game_state in ["sync_lobby
 
                 rem = int(t_end - time.time())
 
-                # 1. ПЕРЕВІРКА ЗАВЕРШЕННЯ ЧАСУ
-                if rem <= 0:
-                    st.warning("⏰ ЧАС ВИЙШОВ!")
+                # Створюємо порожній контейнер, який будемо наповнювати
+                # Це важливо: він затирає все, що було в ньому раніше
+                game_container = st.empty()
 
-                    if is_host:
-                        if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True, key="next_turn_btn"):
-                            ref.update({
-                                "explainer": "",
-                                "listener": "",
-                                "word": "",
-                                "t_end": None,
-                                "current_round": current_round + 1
-                            })
+                with game_container.container():
+                    # 1. ПЕРЕВІРКА ЗАВЕРШЕННЯ ЧАСУ
+                    if rem <= 0:
+                        st.warning("⏰ ЧАС ВИЙШОВ!")
+
+                        if is_host:
+                            if st.button("НАСТУПНИЙ ХІД ➡️", use_container_width=True, key="next_turn_btn"):
+                                ref.update({
+                                    "explainer": "",
+                                    "listener": "",
+                                    "word": "",
+                                    "t_end": None,
+                                    "current_round": current_round + 1
+                                })
+                                st.rerun()
+                        else:
+                            st.info("🕒 Очікуємо, поки хост переключить раунд...")
+                            # Прибираємо довгий сон, щоб швидше підхопити зміни від хоста
+                            time.sleep(1)
                             st.rerun()
+
+                    # 2. ВІДОБРАЖЕННЯ ГРИ (ТІЛЬКИ ЯКЩО rem > 0)
                     else:
-                        st.info("🕒 Очікуємо, поки хост переключить раунд...")
-                        time.sleep(2)
+                        st.subheader(f"⏱ Залишилось: {rem} сек")
+                        st.write(f"🎤 **{data['explainer']}** пояснює ➜ **{data['listener']}**")
+
+                        if my_name == data["explainer"]:
+                            st.success("🌟 ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
+                            st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
+
+                            c1, c2 = st.columns(2)
+                            if c1.button("✅ ВГАДАНО", use_container_width=True, key="win_btn_active"):
+                                new_scores = data.get("scores", {})
+                                new_scores[my_name] = new_scores.get(my_name, 0) + 1
+                                ref.update({"scores": new_scores, "word": random.choice(st.session_state.all_words)})
+                                st.rerun()
+                            if c2.button("❌ ПРОПУСТИТИ", use_container_width=True, key="skip_btn_active"):
+                                ref.update({"word": random.choice(st.session_state.all_words)})
+                                st.rerun()
+
+                        elif my_name == data["listener"]:
+                            st.warning("👂 ТИ ВІДГАДУЄШ!")
+                            st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
+
+                        else:
+                            st.info("👀 Спостерігайте за грою...")
+                            st.markdown(
+                                f'<div class="word-box" style="font-size: 20px;">{data["explainer"]} пояснює...</div>',
+                                unsafe_allow_html=True)
+
+                        # Важливо для плавності таймера
+                        time.sleep(1)
                         st.rerun()
-
-                # 2. ВІДОБРАЖЕННЯ ГРИ (ТІЛЬКИ ЯКЩО ЧАС ЩЕ Є)
-                else:
-                    st.subheader(f"⏱ Залишилось: {rem} сек")
-                    st.write(f"🎤 **{data['explainer']}** пояснює ➜ **{data['listener']}**")
-
-                    if my_name == data["explainer"]:
-                        st.success("🌟 ТВОЯ ЧЕРГА ПОЯСНЮВАТИ!")
-                        st.markdown(f'<div class="word-box">{data["word"].upper()}</div>', unsafe_allow_html=True)
-
-                        c1, c2 = st.columns(2)
-                        if c1.button("✅ ВГАДАНО", use_container_width=True, key="win_btn"):
-                            new_scores = data.get("scores", {})
-                            new_scores[my_name] = new_scores.get(my_name, 0) + 1
-                            ref.update({"scores": new_scores, "word": random.choice(st.session_state.all_words)})
-                            st.rerun()
-                        if c2.button("❌ ПРОПУСТИТИ", use_container_width=True, key="skip_btn"):
-                            ref.update({"word": random.choice(st.session_state.all_words)})
-                            st.rerun()
-
-                    elif my_name == data["listener"]:
-                        st.warning("👂 ТИ ВІДГАДУЄШ!")
-                        st.markdown('<div class="word-box">???</div>', unsafe_allow_html=True)
-
-                    else:
-                        st.info("👀 Спостерігайте за грою...")
-                        st.markdown(
-                            f'<div class="word-box" style="font-size: 20px;">{data["explainer"]} пояснює...</div>',
-                            unsafe_allow_html=True)
-
-                    # Оновлення таймера щосекунди
-                    time.sleep(1)
-                    st.rerun()
     else:
         st.error("Кімнату не знайдено!")
         st.session_state.game_state = "mode_select"
