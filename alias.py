@@ -343,84 +343,75 @@ elif st.session_state.game_state == "setup":
         if st.session_state.last_added_word:
             st.markdown(f"✅ Останнє додане слово: **{st.session_state.last_added_word}**")
 
-# --- СИНХРОНІЗОВАНЕ ЛОББІ (DISCORD) ---
-elif st.session_state.game_state == "sync_lobby":
-    st.title(f"🏠 Кімната: {st.session_state.room_id}")
-    ref = db.collection("rooms").document(st.session_state.room_id)
-    doc = ref.get()
-    if not doc.exists:
-        st.error("Кімнату не знайдено!"); st.session_state.game_state = "setup"; st.rerun()
-    
-    data = doc.to_dict()
-    current_players = data.get("players", [])
+# --- СИНХРОНІЗОВАНЕ ЛОББІ ТА ГРА ---
+game_display = st.empty()
 
-    # --- ЛОГІКА СПОВІЩЕНЬ ТА САЙДБАР (ДОДАНО СЮДИ) ---
-    if "old_players_lobby" not in st.session_state:
-        st.session_state.old_players_lobby = current_players
-
-    # Сповіщення
-    for p in current_players:
-        if p not in st.session_state.old_players_lobby:
-            st.toast(f"👋 {p} доєднався!", icon="✨")
-    for p in st.session_state.old_players_lobby:
-        if p not in current_players:
-            st.toast(f"🏃 {p} вийшов", icon="🚪")
-    st.session_state.old_players_lobby = current_players
-
-    # Сайдбар у лобі
-    with st.sidebar:
-        st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
-        st.write(f"👤 Ти: **{st.session_state.my_name}**")
-        st.divider()
-        st.write("👥 **Гравці в черзі:**")
-        for p in current_players:
-            st.caption(f"• {p} {'(хост 👑)' if p == data.get('host') else ''}")
-
-    # Перехід до гри, якщо хост натиснув старт
-    if data.get("state") == "playing":
-        st.session_state.game_state = "playing_sync"; st.rerun()
-
-    st.write("### Гравці в лобі:")
-    cols = st.columns(3)
-    for i, p in enumerate(current_players):
-        cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_lobby_{i}")
-    
-    st.divider()
-    is_host = (data.get("host") == st.session_state.my_name)
-    
-    if is_host:
-        st.subheader("👑 Ви Хост (Адмін)")
-        # Додано унікальні ключі, щоб значення не злітали при rerun
-        h_rounds = st.number_input("Кількість раундів", 1, 20, value=data.get("total_rounds", 3), key="sync_rounds_input")
-        h_timer = st.slider("Секунди на хід", 10, 120, value=data.get("duration", 60), key="sync_timer_input")
-        if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
-            ref.update({"total_rounds": h_rounds, "duration": h_timer})
+with game_display.container():
+    # 1. РЕЖИМ ЛОББІ
+    if st.session_state.game_state == "sync_lobby":
+        ref = db.collection("rooms").document(st.session_state.room_id)
+        doc = ref.get()
+        if not doc.exists:
+            st.error("Кімнату не знайдено!"); st.session_state.game_state = "setup"; st.rerun()
         
-        if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥"):
-            # Ініціалізація scores при старті, щоб сайдбар працював одразу
-            start_scores = {p: 0 for p in data.get("players", [])}
-            ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": "", "scores": start_scores})
+        data = doc.to_dict()
+        current_players = data.get("players", [])
+
+        # Перевірка: чи не натиснув хост "СТАРТ" (якщо так — втікаємо в режим гри)
+        if data.get("state") == "playing":
+            st.session_state.game_state = "playing_sync"
             st.rerun()
-    else:
-        st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
-        st.info(f"📊 Раундів: {data.get('total_rounds', 3)} | ⏱ Час: {data.get('duration', 60)}с")
 
-    if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
-        st.session_state.game_state = "setup"; st.rerun()
-    
-    time.sleep(2); st.rerun()
+        # --- САЙДБАР ЛОББІ ---
+        with st.sidebar:
+            st.write(f"🏠 Кімната: **{st.session_state.room_id}**")
+            st.write(f"👤 Ти: **{st.session_state.my_name}**")
+            st.divider()
+            st.write("👥 **Гравці в черзі:**")
+            for p in current_players:
+                st.caption(f"• {p} {'(хост 👑)' if p == data.get('host') else ''}")
 
-# --- ГРА (DISCORD SYNC) ---
-elif st.session_state.game_state == "playing_sync":
-    ref = db.collection("rooms").document(st.session_state.room_id)
-    doc = ref.get()
-    if not doc.exists:
-        st.session_state.game_state = "setup"; st.rerun()
-    
-    data = doc.to_dict()
-    my_name = st.session_state.my_name
-    is_host = (data.get("host") == my_name)
-    current_players = data.get("players", [])
+        # --- ЦЕНТРАЛЬНИЙ ЕКРАН ЛОББІ ---
+        st.title(f"🏠 Кімната: {st.session_state.room_id}")
+        st.write("### Гравці в лобі:")
+        cols = st.columns(3)
+        for i, p in enumerate(current_players):
+            cols[i % 3].button(f"👤 {p}", disabled=True, key=f"p_lobby_{i}")
+        
+        st.divider()
+        is_host = (data.get("host") == st.session_state.my_name)
+        
+        if is_host:
+            st.subheader("👑 Ви Хост (Адмін)")
+            h_rounds = st.number_input("Кількість раундів", 1, 20, value=data.get("total_rounds", 3), key="sync_rounds_input")
+            h_timer = st.slider("Секунди на хід", 10, 120, value=data.get("duration", 60), key="sync_timer_input")
+            if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
+                ref.update({"total_rounds": h_rounds, "duration": h_timer})
+            
+            if st.button("ПОЧАТИ ГРУ ДЛЯ ВСІХ 🔥"):
+                start_scores = {p: 0 for p in current_players}
+                ref.update({"state": "playing", "current_round": 1, "explainer": "", "listener": "", "scores": start_scores})
+                st.rerun()
+        else:
+            st.warning("🕒 Очікуємо, поки хост розбереться в кнопках...")
+
+        if st.button("🚪 ПОКИНУТИ КІМНАТУ"):
+            new_list = [p for p in current_players if p != st.session_state.my_name]
+            ref.update({"players": new_list})
+            st.session_state.game_state = "setup"; st.rerun()
+        
+        time.sleep(2); st.rerun()
+
+    # 2. РЕЖИМ ГРИ (Зверни увагу: elif стоїть на тому ж рівні, що й if вище)
+    elif st.session_state.game_state == "playing_sync":
+        ref = db.collection("rooms").document(st.session_state.room_id)
+        doc = ref.get()
+        if not doc.exists:
+            st.session_state.game_state = "setup"; st.rerun()
+        
+        data = doc.to_dict()
+        current_players = data.get("players", [])
+        
 
     # САЙДБАР ТЕПЕР ТУТ (вгорі), щоб завжди відображати актуальних гравців
     with st.sidebar:
