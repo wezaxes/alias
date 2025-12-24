@@ -361,7 +361,7 @@ elif st.session_state.game_state == "sync_lobby":
     
     if is_host:
         st.subheader("👑 Ви Хост (Адмін)")
-        h_rounds = st.number_input("Кількість раундів", 1, 20, data.get("total_rounds", 3))
+        h_rounds = st.number_input("Кількість раундів", 1, 20, data.get("total_rounds", 3), key="host_rounds_sync")
         h_timer = st.slider("Секунди на хід", 10, 120, data.get("duration", 60))
         if h_rounds != data.get("total_rounds") or h_timer != data.get("duration"):
             ref.update({"total_rounds": h_rounds, "duration": h_timer})
