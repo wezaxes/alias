@@ -526,7 +526,7 @@ with game_display.container():
                         ref.update({
                             "explainer": p1, "listener": p2, 
                             "word": random.choice(st.session_state.all_words), 
-                            "t_end": time.time() + data.get("duration", 60)
+                            "t_end": time.time() + data.get("duration", 60),
                             "current_quote": ""
                         })
                         st.rerun()
